@@ -1,0 +1,29 @@
+#storm
+user.storm-kafka.zk.connection : 'v32:2181,v29:2181,v30:2181'
+user.storm-kafka.topic : 'hcb_testlog'
+user.storm-kafka.zk.root : '/storm'
+user.storm-kafka.group.id : 'g7'
+user.storm-kafka.retry.delay.multiplier : 2
+user.storm-kafka.retry.initial.delay.ms : 1
+storm.debug : 'false'
+#LatestTime = -1L,EarliestTime = -2L
+user.storm-kafka.start.offset.time : "-1"
+user.spout.reader.parallelism : 4
+user.bolt.loader.parallelism : 2
+user.nimbus.host : 'v32'
+user.worker.numbers : 1
+user.topology.name : 'kafka-storm-kafka'
+user.kafka.default.unknown.topic : 'unknown-topic'
+user.kafka.default.wrong.data.topic : 'wrong-data-topic'
+#kafka
+bootstrap.servers : 'v32:6667,v29:6667'
+acks : '1'
+retries : 0
+batch.size : 16384
+linger.ms : 0
+buffer.memory : 33554432
+maxOffsetBehind : 1000
+key.serializer : 'org.apache.kafka.common.serialization.StringSerializer'
+value.serializer : 'org.apache.kafka.common.serialization.StringSerializer'
+#true:start
+ignoreZkOffsets : 'false'

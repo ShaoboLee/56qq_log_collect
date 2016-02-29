@@ -23,7 +23,8 @@ public class Utils {
 
 	public static final String METRICS_CONSUMER = "user.metric.consumer";
 	public static final String READER_PARALLELISM = "user.spout.reader.parallelism";
-	public static final String LOADER_PARALLELISM = "user.bolt.loader.parallelism";
+	public static final String LOADER_PARALLELISM_1 = "user.bolt1.loader.parallelism";
+	public static final String LOADER_PARALLELISM_2 = "user.bolt2.loader.parallelism";
 	public static final String WORKS_NUMBER = "user.worker.numbers";
 	public static final String TOPOLOGY_NAME = "user.topology.name";
 	
@@ -79,6 +80,12 @@ public class Utils {
 
 		//return yamlConf.get(conf) == null ? defaultValue : (Long) yamlConf.get(conf);
 		return yamlConf.get(conf) == null ? defaultValue : Double.parseDouble(yamlConf.get(conf).toString());
+	}
+	
+	public static float getValue(Map<String, Object> yamlConf, String conf, float defaultValue) {
+
+		//return yamlConf.get(conf) == null ? defaultValue : (Long) yamlConf.get(conf);
+		return yamlConf.get(conf) == null ? defaultValue : Float.parseFloat(yamlConf.get(conf).toString());
 	}
 	
 	public static boolean getValue(Map<String, Object> yamlConf, String conf, boolean defaultValue) {

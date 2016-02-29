@@ -1,5 +1,6 @@
 package com.wlqq.bigdata.hdfs;
 
+import java.io.IOException;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
@@ -75,7 +76,7 @@ public class LogLandTopology {
         spoutConf.retryInitialDelayMs = Utils.getValue(userConfig, Utils.Retry_Initial_Delay_Ms,spoutConf.retryInitialDelayMs);
         //fail的记录掉队多少的时候丢弃        
         spoutConf.maxOffsetBehind = Utils.getValue(userConfig, Utils.MAX_OFFSET_BEHIND,spoutConf.maxOffsetBehind);
-        //spoutConf.startOffsetTime = Utils.getValue(userConfig, Utils.START_OFFSET_TIME,kafka.api.OffsetRequest.LatestTime());
+        spoutConf.startOffsetTime = Utils.getValue(userConfig, Utils.START_OFFSET_TIME,kafka.api.OffsetRequest.EarliestTime());
         
         int intervalHour = Utils.getValue(userConfig, Utils.HIVE_PARTITION_HOUR_INTERVAL, 1);
         
@@ -86,8 +87,7 @@ public class LogLandTopology {
         // sync the filesystem after every 1k tuples
         SyncPolicy syncPolicy = new CountSyncPolicy(Utils.getValue(userConfig, Utils.HDFS_BATCH_SIZE, 1000));
 
-        float file_size = userConfig.get(Utils.HIVE_FILE_SIZE)==null?5f:Float.parseFloat(userConfig.get(Utils.HIVE_FILE_SIZE).toString());
-        FileRotationPolicy rotationPolicy = new PartitionByHourPolicy(file_size, 
+        FileRotationPolicy rotationPolicy = new PartitionByHourPolicy(Utils.getValue(userConfig, Utils.HIVE_FILE_SIZE, 10f), 
         		com.wlqq.bigdata.hdfs.PartitionByHourPolicy.Units.MB,intervalHour);
 
         String hdfsurl = Utils.getValue(userConfig, Utils.HDFS_URL,"hdfs://localhost:9000");
@@ -105,19 +105,31 @@ public class LogLandTopology {
         FileNameFormat fileNameFormat = new DefaultFileNameFormat()
         .withPath(hdfsWritePath).withPrefix(topicName+"-");//.withPrefix(topicName+"-");
 
-        HdfsBolt hdfsBolt = new HdfsBolt()
-                            .withFsUrl(hdfsurl)
-                            .withFileNameFormat(fileNameFormat)
-                            .withRecordFormat(format)
-                            .withRotationPolicy(rotationPolicy)
-                            .withSyncPolicy(syncPolicy)
-                            .addRotationAction(action)
-                            .withConfigKey("hdfs-key");
+        HdfsBolt hdfsBolt = new HdfsBolt(){
+        	@Override
+        	public void cleanup() {
+        		try {
+        			logger.info("excute cleanup...");
+        			rotateOutputFile();//flush data to hdfs,then load data to hive
+        		} catch (IOException e) {
+        			// TODO Auto-generated catch block
+        			e.printStackTrace();
+        		}
+        	} 
+        }
+        .withFsUrl(hdfsurl)
+        .withFileNameFormat(fileNameFormat)
+        .withRecordFormat(format)
+        .withRotationPolicy(rotationPolicy)
+        .withSyncPolicy(syncPolicy)
+        .addRotationAction(action)
+        .withConfigKey("hdfs-key");
+                            
         
         TopologyBuilder builder = new TopologyBuilder();
         builder.setSpout("kafka-reader", new KafkaSpout(spoutConf), Utils.getValue(userConfig, Utils.READER_PARALLELISM, 1)); // Kafka我们创建了一个10分区的Topic，这里并行度设置为10
-        builder.setBolt("parse-json",parseJsonBolt ,Utils.getValue(userConfig, Utils.LOADER_PARALLELISM, 1)).shuffleGrouping("kafka-reader");
-        builder.setBolt("storm-to-hdfs",hdfsBolt ,Utils.getValue(userConfig, Utils.LOADER_PARALLELISM, 1)).shuffleGrouping("parse-json");
+        builder.setBolt("parse-json",parseJsonBolt ,Utils.getValue(userConfig, Utils.LOADER_PARALLELISM_1, 1)).shuffleGrouping("kafka-reader");
+        builder.setBolt("storm-to-hdfs",hdfsBolt ,Utils.getValue(userConfig, Utils.LOADER_PARALLELISM_2, 1)).shuffleGrouping("parse-json");
        
         Config conf = new Config();
         conf.put(Config.NIMBUS_HOST, userConfig.get(Utils.NIMBUS_HOST));

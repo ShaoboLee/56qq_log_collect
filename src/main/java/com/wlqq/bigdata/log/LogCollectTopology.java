@@ -57,15 +57,15 @@ public class LogCollectTopology {
         spoutConf.retryInitialDelayMs = Utils.getValue(userConfig, Utils.Retry_Initial_Delay_Ms,spoutConf.retryInitialDelayMs);
         //fail的记录掉队多少的时候丢弃 
         spoutConf.maxOffsetBehind = Utils.getValue(userConfig, Utils.MAX_OFFSET_BEHIND,spoutConf.maxOffsetBehind);
-        //spoutConf.startOffsetTime = Utils.getValue(userConfig, Utils.START_OFFSET_TIME,kafka.api.OffsetRequest.LatestTime());
+        spoutConf.startOffsetTime = Utils.getValue(userConfig, Utils.START_OFFSET_TIME,kafka.api.OffsetRequest.EarliestTime());
         
         ParseKafkaDataBolt parseKafkaDataBolt = new ParseKafkaDataBolt(userConfig);
         StormToKafkaBolt stormToKafkaBolt = new StormToKafkaBolt(userConfig);
         
         TopologyBuilder builder = new TopologyBuilder();
         builder.setSpout("kafka-reader", new KafkaSpout(spoutConf), Utils.getValue(userConfig, Utils.READER_PARALLELISM, 1)); // Kafka我们创建了一个10分区的Topic，这里并行度设置为10
-        builder.setBolt("parse-json",parseKafkaDataBolt ,Utils.getValue(userConfig, Utils.LOADER_PARALLELISM, 1)).shuffleGrouping("kafka-reader");
-        builder.setBolt("storm-to-kafka", stormToKafkaBolt,Utils.getValue(userConfig, Utils.LOADER_PARALLELISM, 1)).fieldsGrouping("parse-json", new Fields("_dfp_"));
+        builder.setBolt("parse-json",parseKafkaDataBolt ,Utils.getValue(userConfig, Utils.LOADER_PARALLELISM_1, 1)).shuffleGrouping("kafka-reader");
+        builder.setBolt("storm-to-kafka", stormToKafkaBolt,Utils.getValue(userConfig, Utils.LOADER_PARALLELISM_2, 1)).fieldsGrouping("parse-json", new Fields("_dfp_"));
        
         Config conf = new Config();
         conf.put(Config.NIMBUS_HOST, userConfig.get(Utils.NIMBUS_HOST));

@@ -47,7 +47,7 @@ public class ParseJsonBolt  extends BaseRichBolt {
 		// TODO Auto-generated method stub
 		this.collector = collector;
 		p = new KafkaProduce(userConfig);
-		delimiter = Utils.getValue(userConfig, Utils.FIELD_DELIMITER, "\001");
+		delimiter = Utils.getValue(userConfig, Utils.HIVE_FIELD_DELIMITER, "\001");
 		
 	}
 

@@ -38,8 +38,6 @@ public class LoadDataToHiveAction implements RotationAction {
     String hourPartition;//对应的小时分区
     HiveJDBC hiveJDBC;
     
-	boolean init = false;
-	boolean flag = true;//jdbc init;
 	private String hivehost;
 	private String hiveport;
 	private String hiveJsonSerdeJarPath;
@@ -79,9 +77,8 @@ public class LoadDataToHiveAction implements RotationAction {
     	
     	LOG.info("excute sql--->"+sql);
     	
-    	if(!init){//init one time
-    		hiveJDBC = new HiveJDBC(hivehost, hiveport);
-    	}
+    	hiveJDBC = new HiveJDBC();
+    	hiveJDBC.init(hivehost, hiveport);//init
     	
     	if(hiveFileFormat.equalsIgnoreCase("json")){//add jar 
     		String addjar = "add jar "+hiveJsonSerdeJarPath;
@@ -89,6 +86,7 @@ public class LoadDataToHiveAction implements RotationAction {
     	}
     	
     	hiveJDBC.loadData(sql);
+    	hiveJDBC.close();
     }
     
     public static void main(String[] args){

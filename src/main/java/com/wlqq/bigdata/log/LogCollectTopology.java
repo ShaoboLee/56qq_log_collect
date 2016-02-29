@@ -40,7 +40,7 @@ public class LogCollectTopology {
 		
         //以storm和kafka相关参数的配置文件作为参数		
 		if(args.length!=1){
-			System.err.println("Usage:./bin/storm jar xxx.jar com.wlqq.bigdata.log.HCBTopology xxxxx.yaml");
+			System.err.println("Usage:./bin/storm jar xxx.jar com.wlqq.bigdata.log.LogCollectTopology xxxxx.yaml");
 			System.exit(0);
 		}
 		

@@ -9,7 +9,8 @@ storm.debug : 'false'
 #LatestTime = -1L,EarliestTime = -2L
 user.storm-kafka.start.offset.time : "-1"
 user.spout.reader.parallelism : 4
-user.bolt.loader.parallelism : 2
+user.bolt1.loader.parallelism : 2
+user.bolt2.loader.parallelism : 2
 user.nimbus.host : 'v32'
 user.worker.numbers : 1
 user.topology.name : 'kafka-storm-kafka'

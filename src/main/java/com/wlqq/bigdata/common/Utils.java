@@ -11,25 +11,28 @@ import org.apache.commons.logging.LogFactory;
 public class Utils {
 	
 	private static final Log logger = LogFactory.getLog(Utils.class);
-	public static final String ZKS = "user.storm-kafka.zk.connection";
-	public static final String ZK_ROOT = "user.storm-kafka.zk.root";
-	public static final String TOPIC = "user.storm-kafka.topic";
-	public static final String KAFKA_GROUP_ID = "user.storm-kafka.group.id";
-	public static final String NIMBUS_HOST = "user.nimbus.host";
-	public static final String START_OFFSET_TIME = "user.storm-kafka.start.offset.time";
-	public static final String Retry_Initial_Delay_Ms = "user.storm-kafka.retry.initial.delay.ms";
-	public static final String Retry_Delay_Multiplier = "user.storm-kafka.retry.delay.multiplier";
-	public static final String STORM_DEBUG = "storm.debug";
-
-	public static final String METRICS_CONSUMER = "user.metric.consumer";
-	public static final String READER_PARALLELISM = "user.spout.reader.parallelism";
-	public static final String LOADER_PARALLELISM_1 = "user.bolt1.loader.parallelism";
-	public static final String LOADER_PARALLELISM_2 = "user.bolt2.loader.parallelism";
-	public static final String WORKS_NUMBER = "user.worker.numbers";
-	public static final String TOPOLOGY_NAME = "user.topology.name";
 	
-	public static final String DEFAULT_UNKNOWN_TOPIC = "user.kafka.default.unknown.topic";//该topic用于存放未知topic对应的数据
-	public static final String DEFAULT_RECEIVE_WRONG_DATA_TOPIC = "user.kafka.default.wrong.data.topic";//该topic用于存放数据格式错误的数据
+	//storm
+	public static final String ZKS = "storm.zk.connection";
+	public static final String ZK_ROOT = "storm.zk.root";
+	public static final String READER_PARALLELISM = "storm.spout.parallelism";
+	public static final String LOADER_PARALLELISM_1 = "storm.bolt1.parallelism";
+	public static final String LOADER_PARALLELISM_2 = "storm.bolt2.parallelism";
+	public static final String WORKS_NUMBER = "storm.worker.numbers";
+	public static final String TOPOLOGY_NAME = "storm.topology.name";
+	public static final String NIMBUS_HOST = "storm.nimbus.host";
+	public static final String STORM_DEBUG = "storm.debug";
+	
+	//kafka-storm
+	public static final String TOPIC = "kafka-storm.consume.topic";
+	public static final String KAFKA_GROUP_ID = "kafka-storm.group.id";
+	public static final String START_OFFSET_TIME = "kafka.start.offset.time";
+	public static final String Retry_Initial_Delay_Ms = "kafka-storm.retry.initial.delay.ms";
+	public static final String Retry_Delay_Multiplier = "kafka-storm.retry.delay.multiplier";
+	
+	//kafka
+	public static final String DEFAULT_UNKNOWN_TOPIC = "kafka.default.unknown.topic";//该topic用于存放未知topic对应的数据
+	public static final String DEFAULT_RECEIVE_WRONG_DATA_TOPIC = "kafka.default.wrong.data.topic";//该topic用于存放数据格式错误的数据
 	public static final String BOOTSTRAP_SERVERS_CONFIG = "bootstrap.servers";
 	public static final String ACKS_CONFIG = "acks";
 	public static final String RETRIES_CONFIG = "retries";
@@ -41,10 +44,12 @@ public class Utils {
 	public static final String IGNORE_ZK_OFFSETS = "ignoreZkOffsets";
 	public static final String MAX_OFFSET_BEHIND = "maxOffsetBehind";
 	
-	public static final String FIELD_DELIMITER = "field.delimiter";
+	
 	public static final String HDFS_URL = "hdfs.url";
 	public static final String HDFS_BATCH_SIZE = "hdfs.batch.size";
 	public static final String HDFS_WRITE_PATH = "hdfs.write.path";
+	
+	public static final String HIVE_FIELD_DELIMITER = "hive.field.delimiter";
 	public static final String HIVE_PARTITION_HOUR_INTERVAL = "hive.partition.hour.interval";
 	public static final String HIVE_PARTITION_DAY_NAME = "hive.partition.day.name";
 	public static final String HIVE_PARTITION_DAY_FORMAT = "hive.partition.day.format";

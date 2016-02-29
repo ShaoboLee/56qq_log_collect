@@ -1,21 +1,19 @@
-#storm
-user.storm-kafka.zk.connection : 'v32:2181,v29:2181,v30:2181'
-user.storm-kafka.topic : '1001'
-user.storm-kafka.zk.root : '/storm'
-user.storm-kafka.group.id : 'g1001'
-user.storm-kafka.retry.delay.multiplier : 2
-user.storm-kafka.retry.initial.delay.ms : 1
+#############storm#############
+storm.zk.connection : 'v32:2181,v29:2181,v30:2181'
+storm.zk.root : '/storm'
 storm.debug : 'false'
-#LatestTime = -1L,EarliestTime = -2L
-#user.storm-kafka.start.offset.time : "-1"
-user.spout.reader.parallelism : 4
-user.bolt.loader.parallelism : 2
-user.nimbus.host : 'v32'
-user.worker.numbers : 1
-user.topology.name : 'kafka-storm-hdfs-1001'
-user.kafka.default.unknown.topic : 'unknown-topic'
-user.kafka.default.wrong.data.topic : 'wrong-data-topic'
-#kafka
+storm.nimbus.host : 'v32'
+storm.worker.numbers : 1
+storm.topology.name : 'kafka-storm-kafka'
+storm.spout.parallelism : 4
+storm.bolt1.parallelism : 2
+storm.bolt2.parallelism : 2
+###############storm-kafka############
+kafka-storm.consume.topic : 'hcb_testlog'
+kafka-storm.group.id : 'g7'
+kafka-storm.retry.delay.multiplier : 2
+kafka-storm.retry.initial.delay.ms : 1
+###############kafka###################
 bootstrap.servers : 'v32:6667,v29:6667'
 acks : '1'
 retries : 0
@@ -25,10 +23,12 @@ buffer.memory : 33554432
 maxOffsetBehind : 1000
 key.serializer : 'org.apache.kafka.common.serialization.StringSerializer'
 value.serializer : 'org.apache.kafka.common.serialization.StringSerializer'
-#true:start
 ignoreZkOffsets : 'false'
-#hdfs
-#field.delimiter : '	' #default \001
+#LatestTime = -1L,EarliestTime = -2L
+#kafka.start.offset.time : "-2"
+kafka.default.unknown.topic : 'unknown-topic'
+kafka.default.wrong.data.topic : 'wrong-data-topic'
+##############hdfs###################
 dfs.nameservices : 'c1'
 dfs.ha.namenodes.c1 : 'nn1,nn2'
 dfs.namenode.rpc-address.c1.nn1 : 'v30:8020'
@@ -40,13 +40,15 @@ dfs.namenode.http-address.c1.nn2 : 'v28:50070'
 dfs.namenode.https-address.c1.nn1 : 'v30:50470'
 dfs.namenode.https-address.c1.nn2 : 'v28:50470'
 hdfs.batch.size : 1000
-#hive
+hdfs.write.path : '/storm1'
+####################hive################
+#hive.field.delimiter : '    ' #default \001
 hive.partition.hour.interval : 1
 hive.partition.day.name : 'day'
 hive.partition.day.format : 'yyyy-MM-dd'
 hive.partition.hour.name : 'hour'
 hive.data.path : '/apps/hive/warehouse/test.db/t1001_d_h'
-hive.file.size : 10 #if size>=5m then create a new file
+hive.file.size : '9.9' #if size>=5m then create a new file
 hive.host : 'v29'
 hive.port : '10000'
 hive.table : 't1001_d_h'

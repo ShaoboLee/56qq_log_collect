@@ -1,30 +1,32 @@
-################storm##################
-storm.zk.connection : 'v32:2181,v29:2181,v30:2181'
-storm.zk.root : '/storm'
-storm.debug : 'false'
-storm.nimbus.host : 'v32'
-storm.worker.numbers : 1
-storm.topology.name : 'kafka-storm-kafka'
-storm.spout.parallelism : 4
-storm.bolt1.parallelism : 2
-storm.bolt2.parallelism : 2
-#####################storm-kafka##############
-kafka-storm.consume.topic : 'hcb_testlog'
-kafka-storm.group.id : 'g7'
-kafka-storm.retry.delay.multiplier : 2
+#storm
+storm.zk.connection : 'v32:2181,v29:2181,v30:2181' #zookeeper连接
+storm.zk.root : '/storm' #storm在zookeeper里面存放的根节点
+storm.debug : 'false' #是否debug模式
+storm.nimbus.host : 'v32' #指定nimbus节点
+storm.worker.numbers : 1 #设置该topology对应的worker个数
+storm.topology.name : 'kafka-storm-kafka' #topology对应的名称
+storm.spout.parallelism : 4 #设置spout的并发量
+storm.bolt1.parallelism : 2 #设置第一个bolt的并发量
+storm.bolt2.parallelism : 2 #设置第二个bolt的并发量
+
+#storm-kafka
+kafka-storm.consume.topic : 'hcb_testlog' #storm消费kafka的topic名称
+kafka-storm.group.id : 'g7'  #消费分组id
+kafka-storm.retry.delay.multiplier : 2 #重试时间间隔=min（${kafka-storm.retry.initial.delay.ms} * pow(${kafka-storm.retry.delay.multiplier},retryNum-1),60s）
 kafka-storm.retry.initial.delay.ms : 1
-####################kafka#####################
-bootstrap.servers : 'v32:6667,v29:6667'
-acks : '1'
-retries : 0
-batch.size : 16384
+
+#kafka
+bootstrap.servers : 'v32:6667,v29:6667' #指定kafka的broker信息，produce会用到
+acks : '1' #生产者发送数据给kafka的确认信息，可以设置的值: 0、1、all，0：生产者不会等待kafka的任何确认信息，保存到buffer后就立即返回。1：只要leader写入成功或失败就会返回确认信息，不用管followers是否成功。all：等待in-sync里面的replicas的确认信息
+retries : 0 #produce发送失败重试次数，默认0
+batch.size : 16384 #Producer会尝试去把发往同一个Partition的多个Requests进行合并，batch.size指明了一次Batch合并后Requests总大小的上限
 linger.ms : 0
-buffer.memory : 33554432
-maxOffsetBehind : 1000
+buffer.memory : 33554432 #producer可以用来缓存数据的内存大小
+maxOffsetBehind : 1000 #落后多少条记录后就丢弃这条记录
 key.serializer : 'org.apache.kafka.common.serialization.StringSerializer'
 value.serializer : 'org.apache.kafka.common.serialization.StringSerializer'
-ignoreZkOffsets : 'false'
+ignoreZkOffsets : 'false' #是否忽略zookeeper里面保存的offset
 #LatestTime = -1L,EarliestTime = -2L
 #kafka.start.offset.time : "-2"
-kafka.default.unknown.topic : 'unknown-topic'
-kafka.default.wrong.data.topic : 'wrong-data-topic'
+kafka.default.unknown.topic : 'unknown-topic' #未知业务存放的topic，可以修改名字
+kafka.default.wrong.data.topic : 'wrong-data-topic' #解析失败的记录存放的topic，可以修改名

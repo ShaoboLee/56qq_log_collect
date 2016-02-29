@@ -1,33 +1,36 @@
 #############storm#############
-storm.zk.connection : 'v32:2181,v29:2181,v30:2181'
-storm.zk.root : '/storm'
-storm.debug : 'false'
-storm.nimbus.host : 'v32'
-storm.worker.numbers : 1
-storm.topology.name : 'kafka-storm-kafka'
-storm.spout.parallelism : 4
-storm.bolt1.parallelism : 2
-storm.bolt2.parallelism : 2
+storm.zk.connection : 'v32:2181,v29:2181,v30:2181'  #zookeeper连接
+storm.zk.root : '/storm' #storm在zookeeper里面存放的根节点
+storm.debug : 'false'  #是否debug模式
+storm.nimbus.host : 'v32' #指定nimbus节点
+storm.worker.numbers : 1 #设置该topology对应的worker个数
+storm.topology.name : 'kafka-storm-hdfs-1001' #topology对应的名称
+storm.spout.parallelism : 4 #设置spout的并发量
+storm.bolt1.parallelism : 2 #设置第一个bolt的并发量
+storm.bolt2.parallelism : 2 # #设置第二个bolt的并发量
+
 ###############storm-kafka############
-kafka-storm.consume.topic : 'hcb_testlog'
-kafka-storm.group.id : 'g7'
-kafka-storm.retry.delay.multiplier : 2
+kafka-storm.consume.topic : '1001' #storm消费kafka的topic名称
+kafka-storm.group.id : 'g12' #消费分组id
+kafka-storm.retry.delay.multiplier : 2 #重试时间间隔=min（${kafka-storm.retry.initial.delay.ms} * pow(${kafka-storm.retry.delay.multiplier},retryNum-1),60s）
 kafka-storm.retry.initial.delay.ms : 1
+
 ###############kafka###################
-bootstrap.servers : 'v32:6667,v29:6667'
-acks : '1'
-retries : 0
-batch.size : 16384
+bootstrap.servers : 'v32:6667,v29:6667' #指定kafka的broker信息，produce会用到
+acks : '1' #生产者发送数据给kafka的确认信息，可以设置的值: 0、1、all，0：生产者不会等待kafka的任何确认信息，保存到buffer后就立即返回。1：只要leader写入成功或失败就会返回确认信息，不用管followers是否成功。all：等待in-sync里面的replicas的确认信息
+retries : 0 #produce发送失败重试次数，默认0
+batch.size : 16384 #Producer会尝试去把发往同一个Partition的多个Requests进行合并，batch.size指明了一次Batch合并后Requests总大小的上限
 linger.ms : 0
-buffer.memory : 33554432
-maxOffsetBehind : 1000
+buffer.memory : 33554432 #producer可以用来缓存数据的内存大小
+maxOffsetBehind : 1000 #落后多少条记录后就丢弃这条记录
 key.serializer : 'org.apache.kafka.common.serialization.StringSerializer'
 value.serializer : 'org.apache.kafka.common.serialization.StringSerializer'
-ignoreZkOffsets : 'false'
+ignoreZkOffsets : 'false' #是否忽略zookeeper里面保存的offset
 #LatestTime = -1L,EarliestTime = -2L
 #kafka.start.offset.time : "-2"
-kafka.default.unknown.topic : 'unknown-topic'
-kafka.default.wrong.data.topic : 'wrong-data-topic'
+kafka.default.unknown.topic : 'unknown-topic'  #未知业务存放的topic，可以修改名字
+kafka.default.wrong.data.topic : 'wrong-data-topic' #解析失败的记录存放的topic，可以修改名
+
 ##############hdfs###################
 dfs.nameservices : 'c1'
 dfs.ha.namenodes.c1 : 'nn1,nn2'
@@ -39,20 +42,22 @@ dfs.namenode.http-address.c1.nn1 : 'v30:50070'
 dfs.namenode.http-address.c1.nn2 : 'v28:50070'
 dfs.namenode.https-address.c1.nn1 : 'v30:50470'
 dfs.namenode.https-address.c1.nn2 : 'v28:50470'
-hdfs.batch.size : 1000
-hdfs.write.path : '/storm1'
-####################hive################
-#hive.field.delimiter : '    ' #default \001
-hive.partition.hour.interval : 1
-hive.partition.day.name : 'day'
-hive.partition.day.format : 'yyyy-MM-dd'
-hive.partition.hour.name : 'hour'
-hive.data.path : '/apps/hive/warehouse/test.db/t1001_d_h'
-hive.file.size : '9.9' #if size>=5m then create a new file
-hive.host : 'v29'
-hive.port : '10000'
-hive.table : 't1001_d_h'
-hive.database : 'test'
-hive.file.format : 'json'
-hive.field.delete.head.underline : 'true'
-hive.json.serde.jar.path : 'hdfs://c1/storm/json-serde-1.3.8-SNAPSHOT-jar-with-dependencies.jar'
+#上面部分是Namenode 的HA要用的配置
+hdfs.batch.size : 1000 #到达多少条记录进行一次flush
+hdfs.write.path : '/storm1' #hdfsBolt输出的位置，${hdfs.write.path}/${t.ask_id}
+
+###############hive################
+#hive.field.delimiter : '    ' #default \001 #不以json格式存放时，需要指定的字段分隔符
+hive.partition.hour.interval : 1 #时间分区间隔，1：一个小时一个分区，2:两个小时一个分区，24：以天为分区
+hive.partition.day.name : 'day' ##hive建表时，分区字段名称
+hive.partition.day.format : 'yyyy-MM-dd' #hive建表时，分区字段格式
+hive.partition.hour.name : 'hour' #hive建表时，小时字段名称
+hive.data.path : '/apps/hive/warehouse/test.db/t1001_d_h'  #把写入hdfs的数据拷贝到指定的目录下面${hive.data.path}/${hive.partition.day.name}=2016-02-29/${hive.partition.hour.name}=05,由于拷贝过去后，hive识别不了分区里的数据，就没再用这个参数
+hive.file.size : '127.5' ##写入hdfs的文件达到${hive.file.size }M，就重新生成一个文件
+hive.host : 'v29' #hive jdbc访问
+hive.port : '10000' #hive jdbc访问
+hive.table : 't1001_d_h' #写入hdfs的数据需要load到那个表里面
+hive.database : 'test' #表所在的database
+hive.file.format : 'json' #文件存放格式，”json”表示存放json格式，其他就是正常包含指定分隔符的文本
+hive.field.delete.head.underline : 'true' #是否去除前下划线
+hive.json.serde.jar.path : 'hdfs://c1/storm/json-serde-1.3.8-SNAPSHOT-jar-with-dependencies.jar' #json serde 的jar包在hdfs的存放位置

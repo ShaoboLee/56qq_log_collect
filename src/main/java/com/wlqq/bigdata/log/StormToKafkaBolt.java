@@ -1,7 +1,12 @@
 package com.wlqq.bigdata.log;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import kafka.utils.ZkUtils;
 
@@ -14,7 +19,10 @@ import org.I0Itec.zkclient.ZkClient;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.utils.SystemTime;
+import org.apache.kafka.common.utils.Time;
 
+import scala.collection.Iterator;
 import scala.collection.Seq;
 
 import backtype.storm.task.OutputCollector;
@@ -22,7 +30,6 @@ import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
 
 /**
  * 把storm里面的数据发送到kafka，以设备id作为key（可以保证相同的key发送到相同的partition），json作为value
@@ -38,6 +45,10 @@ public class StormToKafkaBolt extends BaseRichBolt {
 	ZkClient zc;//find topics
 	KafkaProduce p;
 	OutputCollector collector;
+	HashMap<String,String> topics;
+	Time time; 
+	long begin;
+	long updateTopicsInfoIntervalMs;
 	
 	public StormToKafkaBolt(Map<String, Object> userConfig){
 		this.userConfig = userConfig;
@@ -49,6 +60,12 @@ public class StormToKafkaBolt extends BaseRichBolt {
     	p =  new KafkaProduce(userConfig);
 	    zc = new ZkClient(userConfig.get(Utils.ZKS).toString());
 	    this.collector = collector;
+	    time = new SystemTime();
+	    begin = time.milliseconds();
+	    updateTopicsInfoIntervalMs = Utils.getValue(userConfig, Utils.UPDATE_TOPICS_INFO_INTERVAL_Ms, 60000l);
+	    topics = new HashMap<String,String>();
+	    updateTopicInfo();
+	  
     }
 
     /**
@@ -60,10 +77,12 @@ public class StormToKafkaBolt extends BaseRichBolt {
     	String _dfp_ = input.getStringByField("_dfp_");
     	String json = input.getStringByField("json");
     	
-    	//从zookeeper里面获取kafka目前创建的topic列表
-    	Seq<String> topics = ZkUtils.getAllTopics(zc);
+    	if(time.milliseconds()-begin>=updateTopicsInfoIntervalMs){//update topics
+    		updateTopicInfo();
+    		begin = time.milliseconds();
+    	}
     	
-    	if(!topics.contains(topic)){
+    	if(!topics.containsKey(topic)){
     		JSONObject jb = new JSONObject();
     		jb.put(topic, JSONObject.parse(json));
     		json = jb.toJSONString();
@@ -80,8 +99,19 @@ public class StormToKafkaBolt extends BaseRichBolt {
                  
     }
     
+    public void updateTopicInfo(){
+    	
+	    Seq<String> tps = ZkUtils.getAllTopics(zc);//cost 80ms
+	    Iterator it =  tps.toIterator();
+	    
+	    while(it.hasNext()){
+	    	topics.put(it.next().toString(), null);
+	    }
+    }
 
     public static void main(String[] args){
+    	
+    	
     	
 		String json = "{\"_terminal_\":1,\"logs\":{" +
 				"\"1001\":["+"{\"common\":{\"_uid_\":1111,\"b\":100},\"data\":{\"count\":5}}],"+
@@ -90,6 +120,15 @@ public class StormToKafkaBolt extends BaseRichBolt {
 		
 		String a="1234";
 		System.out.println(a.substring(0,a.length()-1));
+		
+		Time time = new SystemTime();
+		long begin = time.milliseconds();
+		JSONObject jb2 = JSONObject.parseObject(json);
+		JSONObject jb31 = jb2.getJSONObject("logs");
+		Set<String> sets = jb31.keySet();
+	    long end = time.milliseconds();
+	    System.out.println("cost "+(end-begin)+"ms");
+		
 		
 //		HashMap<String,String> map = new HashMap<String, String>();
 //		map.put("a", "1");
@@ -106,7 +145,7 @@ public class StormToKafkaBolt extends BaseRichBolt {
 			sp.produce("test-1005","111",json);
 			i++;
 		}*/
-/*		
+		
 		String[] options = new String[]{  
 			    "--list",  
 			    "--zookeeper",  
@@ -114,9 +153,20 @@ public class StormToKafkaBolt extends BaseRichBolt {
 			}; 
 		//TopicCommand.main(options);
 		ZkClient zc = new ZkClient("v32:2181,v29:2181,v30:2181");
-		System.out.println(ZkUtils.getAllTopics(zc));
-		System.out.println(kafka.api.OffsetRequest.LatestTime());*/
-		
+		HashMap<String,String> topics = new HashMap<String,String>();
+		long begin1 = time.milliseconds();
+	    Seq<String> tps = ZkUtils.getAllTopics(zc);
+	    long end1 = time.milliseconds();
+	    System.out.println("cost "+(end1-begin1)+"ms");
+	    Iterator it =  tps.toIterator();
+	    while(it.hasNext()){
+	    	topics.put(it.next().toString(), null);
+	    }
+	    
+	    System.out.println(topics);
+//		System.out.println("topics:"+ZkUtils.getAllTopics(zc));
+//		System.out.println(kafka.api.OffsetRequest.LatestTime());
+//		
 //		JSONObject jb = new JSONObject();
 //		jb.put("lg", JSONObject.parse(json));
 //		//json = jb.;

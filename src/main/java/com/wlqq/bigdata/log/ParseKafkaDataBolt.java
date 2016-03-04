@@ -1,5 +1,6 @@
 package com.wlqq.bigdata.log;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +34,7 @@ public class ParseKafkaDataBolt extends BaseRichBolt {
 	
 	private static final Log logger = LogFactory.getLog(ParseKafkaDataBolt.class);
     private static final long serialVersionUID = 886149197481637894L;
-	JSONObject jb1,jb2,jb3;
+	
 	ProducerConfig config;
 	OutputCollector collector;
 	KafkaProduce p;
@@ -51,7 +52,9 @@ public class ParseKafkaDataBolt extends BaseRichBolt {
 
     public void execute(Tuple input) {
     	
-         String json = input.getString(0);
+    	
+    	JSONObject jb1;
+        String json = input.getString(0);
          
          try{
  			jb1 = JSONObject.parseObject(json); 
@@ -65,6 +68,7 @@ public class ParseKafkaDataBolt extends BaseRichBolt {
          
          Set<String> sets;//log task id
          
+         JSONObject jb2;
          try{
         	 jb2 = jb1.getJSONObject("logs");
         	 sets = jb2.keySet();
@@ -75,9 +79,19 @@ public class ParseKafkaDataBolt extends BaseRichBolt {
         	 return;
          }
          
-         String _terminal_ = jb1.getString("_terminal_");
+         //遍历第一层除了logs之外的key，存放起来，稍后加入到common里面
+         Set<String> set1;//keys
+         set1 = jb1.keySet();
+         HashMap<String,String> map = new HashMap<String, String>();
+         for(String k:set1){
+        	 if(!k.equals("logs")){
+        		 map.put(k, jb1.getString(k));
+        	 }
+         }
+         
          int i = 0;
          
+         JSONObject jb3;
          for(String id:sets){
         	 
 				JSONArray ja = jb2.getJSONArray(id);
@@ -86,11 +100,17 @@ public class ParseKafkaDataBolt extends BaseRichBolt {
 				for(Object ob:obs){
 					try{
 						jb3 = JSONObject.parseObject(ob.toString());
-						String dfp_ = jb3.getJSONObject("common").getString("_dfp_").toString();
-						if(_terminal_!=null){//add terminal
-							((JSONObject)ob).getJSONObject("common").put("_terminal_", _terminal_);
+						String _dfp_ = jb3.getJSONObject("common").getString("_dfp_").toString();
+						
+						if(!map.isEmpty()){//添加第一层的key到common里面
+							Iterator iter = map.entrySet().iterator();
+							while (iter.hasNext()) {
+								Map.Entry entry = (Map.Entry) iter.next();
+								((JSONObject)ob).getJSONObject("common").put(entry.getKey().toString(), entry.getValue().toString());
+							}
 						}
-						collector.emit(input,new Values(id,dfp_,ob.toString()));
+						
+						collector.emit(input,new Values(id,_dfp_,ob.toString()));
 					}catch (Exception ex) {//get _dfp_ fail
 						logger.error("loss field _dfp_, json="+json,ex);
 			            if(i==0){//send one time 

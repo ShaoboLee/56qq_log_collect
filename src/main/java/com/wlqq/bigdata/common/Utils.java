@@ -43,6 +43,7 @@ public class Utils {
 	public static final String VALUE_SERIALIZER_CLASS_CONFIG = "value.serializer";
 	public static final String IGNORE_ZK_OFFSETS = "ignoreZkOffsets";
 	public static final String MAX_OFFSET_BEHIND = "maxOffsetBehind";
+	public static final String UPDATE_TOPICS_INFO_INTERVAL_Ms = "update.topics.info.interval.ms";
 	
 	
 	public static final String HDFS_URL = "hdfs.url";

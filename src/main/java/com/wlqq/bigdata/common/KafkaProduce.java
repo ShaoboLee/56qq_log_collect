@@ -1,5 +1,9 @@
 package com.wlqq.bigdata.common;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,8 +17,11 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 
+import com.alibaba.fastjson.JSONObject;
+
 import backtype.storm.task.OutputCollector;
 import backtype.storm.tuple.Tuple;
+import backtype.storm.tuple.Values;
 
 import storm.kafka.KafkaUtils;
 
@@ -25,9 +32,13 @@ public class KafkaProduce implements Serializable{
 	KafkaProducer<String, String> producer;
 	Properties props = new Properties();
 	Map<String, Object> userConfig;
+    String path;
+    String newLine; 
+    StorageFailRecord sfr;
 	
 	public KafkaProduce(Map<String, Object> userConfig){
 		
+		newLine = System.getProperty("line.separator");
 		this.userConfig = userConfig;
 		props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
 		    		Utils.getValue(userConfig, ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "v32:6667,v29:6667"));
@@ -47,13 +58,14 @@ public class KafkaProduce implements Serializable{
 		    		Utils.getValue(userConfig, ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer"));
 		//props.put("producer.type", "async");
 		producer = new KafkaProducer(props);
+		path = Utils.getValue(userConfig, Utils.FAIL_RECORD_STORAGE, "");
+		String className = Utils.getValue(userConfig, Utils.FAIL_RECORD_DEAL_CLASS, "");
+		if(!"".equals(path) && className.equals("com.wlqq.bigdata.common.StorageToLocalDisk")){
+			sfr = new StorageToLocalDisk(path);
+		}
 	}
 	
-	public void produce(String topic,String key,String json){
-		produce(topic,key,json,null,null);
-	}
-	
-	public void produce(String topic,String key,String json,final OutputCollector collector,final Tuple input){
+	public void produce(final String topic,String key,final String json){
 		
 		final ProducerRecord<String,String> record;
 		if(key==null || "".equals(key)){//ÂÖÑµ·½Ê½
@@ -65,22 +77,53 @@ public class KafkaProduce implements Serializable{
     	producer.send(record,
                 new Callback() {
                      public void onCompletion(RecordMetadata metadata, Exception e) {
-                         if(e != null){
-                        	 logger.error(e);
-                        	 if(collector!=null){//send again
-                        		 collector.fail(input);
-                        	 }else{//save fail record
-                        		//save fail record
+                         if(e != null){//fail
+                        	 if(sfr!=null){
+                        		 JSONObject jb = new JSONObject();
+                             	 jb.put(topic, JSONObject.parse(json));
+                        		 sfr.storage(jb.toString());
+                        		 logger.error("topic="+topic, e);
+                        	 }else{
+                        		 logger.error("topic="+topic+",json="+json, e);
                         	 }
-                         }else{
-                        	 if(collector!=null){
-                        		 collector.ack(input);
-                        	 }
-                        	 //collector.ack(input);
                          }
                      }
                 });
     }
+	
+	public void writeToLocalDisk(String json){
+		
+		String directory = path.substring(0,path.lastIndexOf(File.separator));
+		File dir = new File(directory);
+		
+		if(!dir.exists()){
+			dir.mkdirs();
+		}
+		
+		File file=new File(path);
+		FileOutputStream out;
+		
+        if(!file.exists()){
+        	try {
+				file.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }
+        try {
+			out=new FileOutputStream(file,true);
+			out.write((json+newLine).getBytes());
+			out.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+			
+	}
 	
     public static void main(String[] args){
 		

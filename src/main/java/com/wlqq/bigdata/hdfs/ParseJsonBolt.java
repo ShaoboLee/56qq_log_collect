@@ -60,8 +60,8 @@ public class ParseJsonBolt  extends BaseRichBolt {
 		}catch(Exception e){
 			logger.error(e);
 			//解析失败的数据，发送到相应的topic
-			p.produce(Utils.getValue(userConfig, Utils.DEFAULT_RECEIVE_WRONG_DATA_TOPIC, "wrong-data-topic"),null,json,collector,input);
-			//collector.ack(input);
+			p.produce(Utils.getValue(userConfig, Utils.DEFAULT_RECEIVE_WRONG_DATA_TOPIC, "wrong-data-topic"),null,json);
+			collector.ack(input);
 			return;
 		}
         

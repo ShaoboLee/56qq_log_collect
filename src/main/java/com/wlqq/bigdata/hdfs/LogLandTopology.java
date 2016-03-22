@@ -5,17 +5,6 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.storm.hdfs.bolt.HdfsBolt;
-import org.apache.storm.hdfs.bolt.format.DefaultFileNameFormat;
-import org.apache.storm.hdfs.bolt.format.DelimitedRecordFormat;
-import org.apache.storm.hdfs.bolt.format.FileNameFormat;
-import org.apache.storm.hdfs.bolt.format.RecordFormat;
-import org.apache.storm.hdfs.bolt.rotation.FileRotationPolicy;
-import org.apache.storm.hdfs.bolt.rotation.FileSizeRotationPolicy;
-import org.apache.storm.hdfs.bolt.rotation.FileSizeRotationPolicy.Units;
-import org.apache.storm.hdfs.bolt.sync.CountSyncPolicy;
-import org.apache.storm.hdfs.bolt.sync.SyncPolicy;
-import org.apache.storm.hdfs.common.rotation.RotationAction;
 
 import storm.kafka.BrokerHosts;
 import storm.kafka.KafkaSpout;
@@ -33,6 +22,19 @@ import backtype.storm.spout.SchemeAsMultiScheme;
 import backtype.storm.topology.TopologyBuilder;
 
 import com.wlqq.bigdata.common.Utils;
+import com.wlqq.bigdata.storm.hdfs.bolt.HdfsBolt;
+import com.wlqq.bigdata.storm.hdfs.bolt.format.DefaultFileNameFormat;
+import com.wlqq.bigdata.storm.hdfs.bolt.format.DelimitedRecordFormat;
+import com.wlqq.bigdata.storm.hdfs.bolt.format.FileNameFormat;
+import com.wlqq.bigdata.storm.hdfs.bolt.format.RecordFormat;
+import com.wlqq.bigdata.storm.hdfs.bolt.rotation.FileRotationPolicy;
+import com.wlqq.bigdata.storm.hdfs.bolt.rotation.FileSizeRotationPolicy;
+import com.wlqq.bigdata.storm.hdfs.bolt.rotation.PartitionByHourPolicy;
+import com.wlqq.bigdata.storm.hdfs.bolt.rotation.FileSizeRotationPolicy.Units;
+import com.wlqq.bigdata.storm.hdfs.bolt.sync.CountSyncPolicy;
+import com.wlqq.bigdata.storm.hdfs.bolt.sync.SyncPolicy;
+import com.wlqq.bigdata.storm.hdfs.common.rotation.LoadDataToHiveAction;
+import com.wlqq.bigdata.storm.hdfs.common.rotation.RotationAction;
 
 /**
  * 读取kafka里面的各个topic，解析之后，写到对应的hive表分区里面（指定字段分隔符存放或者就以json格式存放）
@@ -87,42 +89,30 @@ public class LogLandTopology {
         // sync the filesystem after every 1k tuples
         SyncPolicy syncPolicy = new CountSyncPolicy(Utils.getValue(userConfig, Utils.HDFS_BATCH_SIZE, 1000));
 
-        FileRotationPolicy rotationPolicy = new PartitionByHourPolicy(Utils.getValue(userConfig, Utils.HIVE_FILE_SIZE, 10f), 
-        		com.wlqq.bigdata.hdfs.PartitionByHourPolicy.Units.MB,intervalHour);
+//      FileRotationPolicy rotationPolicy = new PartitionByHourPolicy(Utils.getValue(userConfig, Utils.HIVE_FILE_SIZE, 10f), 
+//		com.wlqq.bigdata.storm.hdfs.bolt.rotation.PartitionByHourPolicy.Units.MB,intervalHour);
 
+        FileRotationPolicy rotationPolicy = new FileSizeRotationPolicy(Utils.getValue(userConfig, Utils.HIVE_FILE_SIZE, 10f), 
+		com.wlqq.bigdata.storm.hdfs.bolt.rotation.FileSizeRotationPolicy.Units.MB);
         String hdfsurl = Utils.getValue(userConfig, Utils.HDFS_URL,"hdfs://localhost:9000");
         
-        //int intervalHour,String tablePath,String dayPartitonName,String hourPartitionName,String id,String dayFormat
-//        RotationAction action = new CopyFileAction(intervalHour,Utils.getValue(userConfig, Utils.HIVE_DATA_PATH, "")
-//        		,Utils.getValue(userConfig, Utils.HIVE_PARTITION_DAY_NAME, "_day_"),Utils.getValue(userConfig, Utils.HIVE_PARTITION_HOUR_NAME, "_hour_")
-//        		,userConfig.get(Utils.TOPIC).toString(),Utils.getValue(userConfig, Utils.HIVE_PARTITION_DAY_FORMAT, "yyyy-MM-dd"));
-        RotationAction action = new LoadDataToHiveAction(intervalHour,userConfig);
+        //RotationAction action = new LoadDataToHiveAction(intervalHour,userConfig);
         
         String hdfsWritePath = Utils.getValue(userConfig, Utils.HDFS_WRITE_PATH,"/storm");
         
         hdfsWritePath = hdfsWritePath.endsWith("/")?hdfsWritePath+topicName:hdfsWritePath+"/"+topicName;
         
         FileNameFormat fileNameFormat = new DefaultFileNameFormat()
-        .withPath(hdfsWritePath).withPrefix(topicName+"-");//.withPrefix(topicName+"-");
+        .withPath(hdfsWritePath).withPrefix(topicName+"-").withExtension(".txt");//.withPrefix(topicName+"-");
 
-        HdfsBolt hdfsBolt = new HdfsBolt(){
-        	@Override
-        	public void cleanup() {
-        		try {
-        			logger.info("excute cleanup...");
-        			rotateOutputFile();//flush data to hdfs,then load data to hive
-        		} catch (IOException e) {
-        			// TODO Auto-generated catch block
-        			e.printStackTrace();
-        		}
-        	} 
-        }
+        HdfsBolt hdfsBolt = new HdfsBolt()
         .withFsUrl(hdfsurl)
+        .withInterval(intervalHour)
         .withFileNameFormat(fileNameFormat)
         .withRecordFormat(format)
         .withRotationPolicy(rotationPolicy)
         .withSyncPolicy(syncPolicy)
-        .addRotationAction(action)
+        //.addRotationAction(action)
         .withConfigKey("hdfs-key");
                             
         

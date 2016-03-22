@@ -24,32 +24,35 @@ public class HiveJDBC implements Serializable{
 	private String driverName = "org.apache.hive.jdbc.HiveDriver";
 	private Connection con;
 	private Statement stmt; 
-	boolean flag = true;//jdbc init;
+	//boolean flag = true;//jdbc init;
 	
-	public void init(String host,String port){
+	public boolean init(String host,String port){
 		try {
 		      Class.forName(driverName);
 		      con = DriverManager.getConnection("jdbc:hive2://"+host+":"+port+"/default", "", "");
 		      stmt = con.createStatement();
+		      return true;
 		    } catch (ClassNotFoundException e) {
 		      // TODO Auto-generated catch block
 		      e.printStackTrace();
-		      flag = false;
+		      //flag = false;
 		    } catch (SQLException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				flag = false;
+				//flag = false;
 			}
+		return false;
 	}
 	
 	public boolean loadData(String sql){
 		
-		if(!flag){//connect hive failed
-			logger.error("hive jdbc connect failed"+"\n"+sql);
-			return false;
-		}
+//		if(!flag){//connect hive failed
+//			logger.error("hive jdbc connect failed"+"\n"+sql);
+//			return false;
+//		}
 		try {
-			return stmt.execute(sql);
+			stmt.execute(sql);
+			return true;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -91,11 +94,11 @@ public class HiveJDBC implements Serializable{
 		HiveJDBC jdbc = new HiveJDBC();
 		jdbc.init("v29", "10000");
 		//t1002_d
-//		jdbc.loadData("add jar hdfs://c1/storm/json-serde-1.3.8-SNAPSHOT-jar-with-dependencies.jar");
-//		jdbc.loadData("load data inpath '/storm/1001/1001-storm-to-hdfs-8-1-1456471921930.txt' into table test.t1001_d_h partition(day='2016-02-26',hour='12')");
+		jdbc.loadData("add jar hdfs://c1/apps/hive/udfjars/json-serde-1.3.8-SNAPSHOT-jar-with-dependencies.jar");
+		jdbc.loadData("load data inpath '/storm/10001/10001-storm-to-hdfs-8-12-1457587388180.txt' into table test.t10001_d partition(dt='2016-03-10')");
 //		jdbc.loadData("load data inpath '/storm/1001/1001-storm-to-hdfs-9-1-1456471921934.txt' into table test.t1001_d_h partition(day='2016-02-26',hour='12')");
 //		jdbc.search("select * from test.t1002_d;");
-		jdbc.loadData("list jar");
+		//jdbc.loadData("list jar");
 		//jdbc.loadData("list jar;");
   }
 }

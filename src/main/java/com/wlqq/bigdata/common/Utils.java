@@ -22,6 +22,7 @@ public class Utils {
 	public static final String TOPOLOGY_NAME = "storm.topology.name";
 	public static final String NIMBUS_HOST = "storm.nimbus.host";
 	public static final String STORM_DEBUG = "storm.debug";
+	public static final String SPOUT_SEND_INTERVAL_SEC = "spout.send.interval";
 	
 	//kafka-storm
 	public static final String TOPIC = "kafka-storm.consume.topic";
@@ -29,6 +30,8 @@ public class Utils {
 	public static final String START_OFFSET_TIME = "kafka.start.offset.time";
 	public static final String Retry_Initial_Delay_Ms = "kafka-storm.retry.initial.delay.ms";
 	public static final String Retry_Delay_Multiplier = "kafka-storm.retry.delay.multiplier";
+	public static final String FAIL_RECORD_DEAL_CLASS = "kafka-storm.fail.record.deal.class";
+	public static final String FAIL_RECORD_STORAGE = "kafka-storm.fail.record.storage.path";
 	
 	//kafka
 	public static final String DEFAULT_UNKNOWN_TOPIC = "kafka.default.unknown.topic";//该topic用于存放未知topic对应的数据
@@ -44,7 +47,6 @@ public class Utils {
 	public static final String IGNORE_ZK_OFFSETS = "ignoreZkOffsets";
 	public static final String MAX_OFFSET_BEHIND = "maxOffsetBehind";
 	public static final String UPDATE_TOPICS_INFO_INTERVAL_Ms = "update.topics.info.interval.ms";
-	
 	
 	public static final String HDFS_URL = "hdfs.url";
 	public static final String HDFS_BATCH_SIZE = "hdfs.batch.size";
@@ -64,11 +66,15 @@ public class Utils {
 	public static final String HIVE_FILE_FORMAT = "hive.file.format";
 	public static final String HIVE_FIELD_DELETE_HEAD_UNDERLINE = "hive.field.delete.head.underline";
 	public static final String HIVE_JSON_SERDE_JAR_PATH= "hive.json.serde.jar.path";
+	public static final String HIVE_FILE_COMPRESS_CLASS = "hive.file.compress.class";
+	public static final String HIVE_FILE_SUFFIX_NAME = "hive.file.suffix.name";
+	public static final String HIVE_DB_PATH = "hive.db.path";
+	public static final String HIVE_LOAD_DELAY_MINUTE = "hive.load.delay.minute";
 	
 	
 	public static String getValue(Map<String, Object> yamlConf, String configName, String defaultValue) {
 
-		return yamlConf.get(configName) == null ? defaultValue : (String) yamlConf.get(configName);
+		return yamlConf.get(configName) == null ? defaultValue : yamlConf.get(configName).toString();
 	}
 
 	public static int getValue(Map<String, Object> yamlConf, String conf, int defaultValue) {

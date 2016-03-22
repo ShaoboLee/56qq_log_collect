@@ -66,6 +66,7 @@ public class LogCollectTopology {
         builder.setSpout("kafka-reader", new KafkaSpout(spoutConf), Utils.getValue(userConfig, Utils.READER_PARALLELISM, 1)); // Kafka我们创建了一个10分区的Topic，这里并行度设置为10
         builder.setBolt("parse-json",parseKafkaDataBolt ,Utils.getValue(userConfig, Utils.LOADER_PARALLELISM_1, 1)).shuffleGrouping("kafka-reader");
         builder.setBolt("storm-to-kafka", stormToKafkaBolt,Utils.getValue(userConfig, Utils.LOADER_PARALLELISM_2, 1)).fieldsGrouping("parse-json", new Fields("_dfp_"));
+        //builder.setBolt("storm-to-localdisk", stormToKafkaBolt,Utils.getValue(userConfig, Utils.LOADER_PARALLELISM_2, 1)).shuffleGrouping("storm-to-kafka");
        
         Config conf = new Config();
         conf.put(Config.NIMBUS_HOST, userConfig.get(Utils.NIMBUS_HOST));

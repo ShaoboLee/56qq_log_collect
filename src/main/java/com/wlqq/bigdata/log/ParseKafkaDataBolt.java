@@ -52,7 +52,6 @@ public class ParseKafkaDataBolt extends BaseRichBolt {
 
     public void execute(Tuple input) {
     	
-    	
     	JSONObject jb1;
         String json = input.getString(0);
          
@@ -61,8 +60,8 @@ public class ParseKafkaDataBolt extends BaseRichBolt {
  			
          }catch(Exception e){
  			logger.error("parse json fail, json="+json,e);
- 			p.produce(Utils.getValue(userConfig, Utils.DEFAULT_RECEIVE_WRONG_DATA_TOPIC, "wrong-data-topic"),null,json,collector,input);
- 			//collector.ack(input);
+ 			p.produce(Utils.getValue(userConfig, Utils.DEFAULT_RECEIVE_WRONG_DATA_TOPIC, "wrong-data-topic"),null,json);
+ 			collector.ack(input);
  			return;
          }
          
@@ -74,8 +73,8 @@ public class ParseKafkaDataBolt extends BaseRichBolt {
         	 sets = jb2.keySet();
          }catch (Exception ex) {//"logs is not exists"
         	 logger.error("loss field logs, json="+json,ex);
-        	 p.produce(Utils.getValue(userConfig, Utils.DEFAULT_RECEIVE_WRONG_DATA_TOPIC, "wrong-data-topic"),null,json,collector,input);
-        	 //collector.ack(input);
+        	 p.produce(Utils.getValue(userConfig, Utils.DEFAULT_RECEIVE_WRONG_DATA_TOPIC, "wrong-data-topic"),null,json);
+        	 collector.ack(input);
         	 return;
          }
          
@@ -109,7 +108,6 @@ public class ParseKafkaDataBolt extends BaseRichBolt {
 								((JSONObject)ob).getJSONObject("common").put(entry.getKey().toString(), entry.getValue().toString());
 							}
 						}
-						
 						collector.emit(input,new Values(id,_dfp_,ob.toString()));
 					}catch (Exception ex) {//get _dfp_ fail
 						logger.error("loss field _dfp_, json="+json,ex);

@@ -8,7 +8,7 @@
 	<name>storm-kafka-log</name>
 	<groupId>com.wlqq.bigdata.log</groupId>
 	<artifactId>kafka-storm-kafka</artifactId>
-	<version>1.0.0</version>
+	<version>1.1.0</version>
 	<packaging>jar</packaging>
 
 	<properties>
@@ -76,12 +76,14 @@
 			<version>${storm.version}</version>
 		</dependency>
 		
+		<!--  
 		<dependency>
 	         <groupId>org.apache.storm</groupId>
 	         <artifactId>storm-hdfs</artifactId>
 	         <version>${storm.version}</version>
         </dependency>
         
+        -->
         <dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpclient</artifactId>

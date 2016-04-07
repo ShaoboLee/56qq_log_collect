@@ -72,6 +72,33 @@ public class Utils {
 	public static final String HIVE_LOAD_DELAY_MINUTE = "hive.load.delay.minute";
 	
 	
+	//ES
+	public static final String SUCCESS_STREAM = "success";
+	public static final String RAWDATA_FORMAT_ERROR_STREAM = "raw-data-format-error";
+	public static final String ES_RESULT_ERROR_STREAM = "es-result-error";
+	public static final String ES_EXECUTE_EXCEPTION_STREAM = "es-execute-exception";
+	public static final String FAILED_RECOVERABLE_STREAM = "failed-recoverable";
+	public static final String FAILED_UNEXPECTED_STREAM = "failed-unexpected";
+	public static final String QUEUE_TIMEOUT_STREAM = "queue-timeout";
+	public static final String FAILED_REJECT_STREAM = "es-rejected-error";
+	public static final String FAILED_MAPPING_STREAM = "es-mapping-error";
+	public static final String DISTRIBUTION_STREAM = "data-distribution";
+	public static final String DISTRIBUTION_PARALLELISM = "storm.bolt.distribution.parallelism";
+	public static final String LOADER_PARALLELISM = "storm.bolt.loader.parallelism";
+	public static final String TOLERANT_PARALLELISM = "storm.bolt.tolerant.parallelism";
+	public static final String OUTPUT_STREAM_FIELDS_NAME = "res";
+	
+	public static final String METRICS_CONSUMER = "user.metric.consumer";
+	public static final String METRICS_PARALLELISM = "user.bolt.metrics.parallelism";
+	
+	public static final String ES_NODES = "user.es.nodes";
+	public static final String ES_INDEX = "user.es.index";
+	public static final String ES_TYPE = "user.es.type";
+	
+	public static final String THREAD_QUEUE_TIMEOUT = "user.bolt.queue.wait.timeout";
+	public static final String THREAD_QUEUE_SIZE = "user.bolt.queue.size";
+	
+	
 	public static String getValue(Map<String, Object> yamlConf, String configName, String defaultValue) {
 
 		return yamlConf.get(configName) == null ? defaultValue : yamlConf.get(configName).toString();

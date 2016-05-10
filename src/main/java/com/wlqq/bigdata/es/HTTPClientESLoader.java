@@ -14,23 +14,39 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.routing.HttpRoute;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.params.CoreConnectionPNames;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.protocol.HTTP;
 import org.apache.log4j.Logger;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.wlqq.bigdata.common.Utils;
+import com.wlqq.bigdata.utils.Utils;
 
 import backtype.storm.tuple.Tuple;
 
+/**
+ * 往es写数据，根据不同的状态码，做不同的处理
+ * @author hcb
+ *
+ */
 public class HTTPClientESLoader implements ESLoader {
 	private static final Logger logger = Logger.getLogger(HTTPClientESLoader.class);
 	private HttpClient httpclient = null;
@@ -40,13 +56,17 @@ public class HTTPClientESLoader implements ESLoader {
 	
 	// 用于StringBuffer的性能优化，确保StringBuffer在第一次分配内存时与最终需要的字节数差别不大
 	private int bulkSize = -1;
-	private int sizePerDocument = 500;
+	private int sizePerDocument = 600;
 	
 	// RR方式访问es的服务器，通过该值确保RR的公平性
 	private int lastWorkLoadNodeIndex = 1;
 	SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 	private String type;
 
+	long current;
+	
+	private boolean closeFlag = false;
+	
 	// index插入正确时的状态码
 	private Set<Integer> STATUS_OK_SET = new HashSet<Integer>();
 
@@ -71,9 +91,40 @@ public class HTTPClientESLoader implements ESLoader {
 		indexHead = configure.get(Utils.ES_INDEX).toString();
 		lastWorkLoadNodeIndex = 1;
 		PoolingClientConnectionManager cm = new PoolingClientConnectionManager();
+		//PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
 		cm.setMaxTotal(nodes.length);
-		cm.setDefaultMaxPerRoute(1);
+	    cm.setDefaultMaxPerRoute(1);
 		httpclient = new DefaultHttpClient(cm);
+
+		Thread executor1 = null;
+		executor1 = new Thread(new Runnable() {//处理httpclient预热的问题,有些改善
+			public void run() {
+				while (!closeFlag) {
+					for(String server:nodes){
+						String url = "http://" + server;
+						HttpHead httpHead = new HttpHead(url);
+						try {
+							httpclient.execute(httpHead);
+							httpHead.abort();
+							Thread.sleep(100);
+						} catch (ClientProtocolException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (InterruptedException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					
+				}
+				
+			}});
+		executor1.start();
+
+		
 	}
 
 	private String getServer() {
@@ -88,24 +139,20 @@ public class HTTPClientESLoader implements ESLoader {
 		StringBuffer sb = new StringBuffer(bulkSize * sizePerDocument);
 		List<Result> results = new ArrayList<Result>(tuples.size());
 		List<Tuple> rigthFormateTuples = new ArrayList<Tuple>(tuples.size());
-		//Map<String,StringBuffer> map = new HashMap<String,StringBuffer>();//<type,sb>
-		//Map<String,List<Tuple>> rigthFormateTuplesMap = new HashMap<String,List<Tuple>>();
 		for (Tuple tuple : tuples) {
 			String esDoc = tuple.getString(0);
 			Object id = null;
-			//Object type1 = null;
 			Result res = null;
 			try {
 				JSONObject rjo = JSONObject.parseObject(esDoc);
+				//logger.info("sequence_number="+rjo.getString("sequence_number"));
 				id = rjo.get("id");
-				//type1 = rjo.getJSONObject("file_location").get("service");
 				if (esDoc == null || esDoc.length() == 0) {
 					res = new Result(Result.STATUS.FAILED_RAWDATA_FORMAT_ERROR, "JSON is empty.", esDoc);
 					res.setTuple(tuple);
 					results.add(res);
 					continue;
 				}
-				//id = getID(rjo);
 				if (id == null || id.toString().length() == 0) {
 					res = new Result(Result.STATUS.FAILED_RAWDATA_FORMAT_ERROR, "ID is empty.", esDoc);
 					res.setTuple(tuple);
@@ -121,76 +168,15 @@ public class HTTPClientESLoader implements ESLoader {
 			
 			sb.append("{\"index\":{\"_id\":\"").append(id).append("\"}}\n").append(esDoc).append("\n");
 			rigthFormateTuples.add(tuple);
-			
-
-//			if(map.containsKey(type1)){
-//				map.get(type1).append("{\"index\":{\"_id\":\"").append(id).append("\"}}\n").append(esDoc).append("\n");
-//				rigthFormateTuplesMap.get(type1).add(tuple);
-//			}else{
-//				StringBuffer sb1 = new StringBuffer();
-//				map.put(type1.toString(), sb1);
-//				sb1.append("{\"index\":{\"_id\":\"").append(id).append("\"}}\n").append(esDoc).append("\n");
-//				List<Tuple> rigthFormateTuples1 = new ArrayList<Tuple>(tuples.size());
-//				rigthFormateTuplesMap.put(type1.toString(), rigthFormateTuples1);
-//				rigthFormateTuples1.add(tuple);
-//			}
-			//rigthFormateTuples.add(tuple);
 		}
 		
 		if (sb.length() == 0) {
 			return results;
 		}
 		
-//		if (map.isEmpty()) {
-//			return results;
-//		}
+		String url = "http://" + getServer() + "/" + index + "/" + type + "/_bulk";
+		HttpPost httppost = new HttpPost(url);
 
-//		Iterator iter = map.entrySet().iterator();
-//		while (iter.hasNext()) {
-//			Map.Entry<String,StringBuffer> entry = (Map.Entry) iter.next();
-//			String type = entry.getKey();
-//			StringBuffer sb = entry.getValue();
-//			List<Tuple> rigthFormateTuples = rigthFormateTuplesMap.get(type);
-//			
-//			HttpPost httppost = new HttpPost("http://" + getServer() + "/" + index + "/" + type + "/_bulk");
-//			Exception ex = null;
-//			try {
-//				HttpEntity entity = new StringEntity(sb.toString(), "UTF-8");
-//				httppost.setEntity(entity);
-//				logger.info("++++++start execute:");
-//				long start = System.currentTimeMillis();
-//				HttpResponse response = httpclient.execute(httppost);
-//				logger.info("++++++end execute:" + (System.currentTimeMillis() - start));
-//
-//				entity = response.getEntity();
-//				String esResult = convertStreamToString(entity.getContent());
-//				httppost.abort();
-//				JSONObject jo = JSONObject.parseObject(esResult);
-//
-//				Boolean errors = jo.getBoolean("errors");
-//				if (errors != null && !errors) {//correct
-//					JSONArray items = jo.getJSONArray("items");
-//					Result res = null;
-//					if (items != null && items.size() == rigthFormateTuples.size()) {
-//						for (int i = 0; i < items.size(); i++) {
-//							res = new Result(Result.STATUS.OK);
-//							res.setTuple(rigthFormateTuples.get(i));
-//							results.add(res);
-//						}
-//					} else {
-//						fillResults(results, rigthFormateTuples, Result.STATUS.FAILED_BY_ES_RESULT,
-//								"+++Result size dose not match bulk load documents size.Result doc:" + esResult, null);
-//					}
-//				} else {//找出返回结果中失败的记录
-//					//TODO:此处的处理逻辑可以更加精确一下，以为一个batch的返回结果中error字段值为true，该批次的数据也不一定每条document都插入es失败
-//					//可以把成功的先找出来，不过需要注意的是error字段为true的情况下，返回的结果报文中记录条数与发出去的原始document的记录条数是否匹配。
-//					
-//					analyzeErrorResponse(jo,results, rigthFormateTuples, esResult);
-//				}
-		
-			
-			
-		HttpPost httppost = new HttpPost("http://" + getServer() + "/" + index + "/" + type + "/_bulk");
 		Exception ex = null;
 		try {
 			HttpEntity entity = new StringEntity(sb.toString(), "UTF-8");
@@ -198,7 +184,7 @@ public class HTTPClientESLoader implements ESLoader {
 			logger.info("++++++start execute:");
 			long start = System.currentTimeMillis();
 			HttpResponse response = httpclient.execute(httppost);
-			logger.info("++++++end execute:" + (System.currentTimeMillis() - start));
+			logger.info("++++++end execute:" + (System.currentTimeMillis() - start)+"ms");
 
 			entity = response.getEntity();
 			String esResult = convertStreamToString(entity.getContent());
@@ -279,6 +265,7 @@ public class HTTPClientESLoader implements ESLoader {
 	}
 
 	public void close() {
+		closeFlag = true;
 		this.httpclient.getConnectionManager().shutdown();
 		logger.info("closed.");
 	}

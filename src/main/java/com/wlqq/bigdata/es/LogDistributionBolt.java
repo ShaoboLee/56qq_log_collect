@@ -7,8 +7,7 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.alibaba.fastjson.JSONObject;
-import com.wlqq.bigdata.common.Utils;
+import com.wlqq.bigdata.utils.Utils;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -18,10 +17,16 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
+/**
+ * 把解析失败的发往FaultTolerantBolt，其他的发往loadbolt，写入es
+ * @author hcb
+ *
+ */
 public class LogDistributionBolt extends BaseRichBolt {
 
 	private static final Log logger = LogFactory.getLog(LogDistributionBolt.class);
 	OutputCollector collector;
+	
 	
 	public void prepare(Map stormConf, TopologyContext context,
 			OutputCollector collector) {
@@ -32,24 +37,13 @@ public class LogDistributionBolt extends BaseRichBolt {
 	public void execute(Tuple input) {
 		
 		String json = input.getString(0);
-		String key = null;
-		try{
-			
-			JSONObject jo = JSONObject.parseObject(json);
-			String host = jo.getJSONObject("file_location").getString("host");
-			String service = jo.getJSONObject("file_location").getString("service");
-			String docker = jo.getJSONObject("file_location").getString("docker");
-			key = host+"-"+service+"-"+docker;
-		}catch(Exception e) {
-			logger.error(e);
-		}
-		
-		if(key==null){
+		String key = input.getString(1);
+		if(!"".equals(key)){
+			collector.emit(Utils.DISTRIBUTION_STREAM, input,new Values(json,key));
+		}else{
 			Result res = new Result(Result.STATUS.FAILED_RAWDATA_FORMAT_ERROR, "JSON is invalid or json don't contain host、service、docker", json);
 			res.setTuple(input);
 			emitResult(Utils.RAWDATA_FORMAT_ERROR_STREAM, res);
-		}else{
-			collector.emit(Utils.DISTRIBUTION_STREAM, input,new Values(json,key));
 		}
 		collector.ack(input);
 	}

@@ -21,7 +21,7 @@ import backtype.storm.spout.SchemeAsMultiScheme;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 
-import com.wlqq.bigdata.common.Utils;
+import com.wlqq.bigdata.utils.Utils;
 
 public class ESTopology {
 
@@ -48,6 +48,9 @@ public class ESTopology {
         //fail的记录掉队多少的时候丢弃        
         spoutConf.maxOffsetBehind = Utils.getValue(userConfig, Utils.MAX_OFFSET_BEHIND,spoutConf.maxOffsetBehind);
         spoutConf.startOffsetTime = Utils.getValue(userConfig, Utils.START_OFFSET_TIME,kafka.api.OffsetRequest.EarliestTime());
+        //spoutConf.startOffsetTime = kafka.api.OffsetRequest.LatestTime();
+        
+        spoutConf.scheme = new SchemeAsMultiScheme(new EScheme());
         
         BatchESLoadBolt loadBolt = new BatchESLoadBolt(userConfig);
         
@@ -59,12 +62,13 @@ public class ESTopology {
         		Utils.getValue(userConfig, Utils.READER_PARALLELISM, 1));
         
         builder.setBolt("bolt-distribution", distributionBolt, Utils.getValue(userConfig, Utils.DISTRIBUTION_PARALLELISM, 1))
-		.shuffleGrouping("spout-kafka-reader");
+        .fieldsGrouping("spout-kafka-reader", new Fields("key"));
+		//.shuffleGrouping("spout-kafka-reader");
         
         builder.setBolt("bolt-es-loader", loadBolt, Utils.getValue(userConfig, Utils.LOADER_PARALLELISM, 1))
 		.fieldsGrouping("bolt-distribution",Utils.DISTRIBUTION_STREAM, new Fields("key"));
 
-        builder.setBolt("falt-tolerant", new FaultTolerantBolt(), Utils.getValue(userConfig, Utils.TOLERANT_PARALLELISM, 1))
+        builder.setBolt("falt-tolerant", new FaultTolerantBolt(userConfig), Utils.getValue(userConfig, Utils.TOLERANT_PARALLELISM, 1))
         .shuffleGrouping("bolt-es-loader", Utils.SUCCESS_STREAM)
 		.shuffleGrouping("bolt-es-loader", Utils.RAWDATA_FORMAT_ERROR_STREAM)
 		.shuffleGrouping("bolt-es-loader", Utils.ES_RESULT_ERROR_STREAM)
@@ -75,6 +79,8 @@ public class ESTopology {
 		.shuffleGrouping("bolt-es-loader", Utils.FAILED_REJECT_STREAM)
 		.shuffleGrouping("bolt-es-loader", Utils.FAILED_MAPPING_STREAM)
 		.shuffleGrouping("bolt-distribution", Utils.RAWDATA_FORMAT_ERROR_STREAM);
+        
+        
 //		builder.setBolt("bolt-es-loader", loadBolt, Utils.getValue(userConfig, Utils.LOADER_PARALLELISM, 1))
 //				.shuffleGrouping("spout-kafka-reader");
 //		builder.setBolt("falt-tolerant", new FaultTolerantBolt(), Utils.getValue(userConfig, Utils.TOLERANT_PARALLELISM, 1))

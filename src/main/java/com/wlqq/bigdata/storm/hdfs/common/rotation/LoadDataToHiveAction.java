@@ -17,10 +17,10 @@ import org.apache.kafka.common.utils.Time;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.wlqq.bigdata.common.HdfsUtils;
-import com.wlqq.bigdata.common.Utils;
 import com.wlqq.bigdata.jdbc.HiveJDBC;
 import com.wlqq.bigdata.storm.hdfs.common.rotation.RotationAction;
+import com.wlqq.bigdata.utils.HdfsUtils;
+import com.wlqq.bigdata.utils.Utils;
 
 import java.io.IOException;
 import java.net.URI;

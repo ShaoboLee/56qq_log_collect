@@ -31,12 +31,12 @@ import org.apache.hadoop.hdfs.client.HdfsDataOutputStream.SyncFlag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.wlqq.bigdata.common.Utils;
 import com.wlqq.bigdata.storm.hdfs.bolt.format.FileNameFormat;
 import com.wlqq.bigdata.storm.hdfs.bolt.format.RecordFormat;
 import com.wlqq.bigdata.storm.hdfs.bolt.rotation.FileRotationPolicy;
 import com.wlqq.bigdata.storm.hdfs.bolt.sync.SyncPolicy;
 import com.wlqq.bigdata.storm.hdfs.common.rotation.RotationAction;
+import com.wlqq.bigdata.utils.Utils;
 
 import java.io.IOException;
 import java.net.URI;

@@ -5,8 +5,8 @@ import java.util.Date;
 import java.util.Map;
 
 
-import com.wlqq.bigdata.common.Utils;
 import com.wlqq.bigdata.storm.hdfs.bolt.rotation.FileRotationPolicy;
+import com.wlqq.bigdata.utils.Utils;
 
 import backtype.storm.tuple.Tuple;
 

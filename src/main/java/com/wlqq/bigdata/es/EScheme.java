@@ -2,6 +2,8 @@ package com.wlqq.bigdata.es;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -20,6 +22,8 @@ public class EScheme implements Scheme {
 		List<Object> value = new ArrayList<Object>();
 		String json = new String(ser);
 		String key = null;
+		String tmp = json;
+
 		try{
 			
 			JSONObject jo = JSONObject.parseObject(json);
@@ -28,6 +32,7 @@ public class EScheme implements Scheme {
 			String docker = jo.getJSONObject("file_location").getString("docker");
 			key = host+"-"+service+"-"+docker;
 			String method = jo.getString("method");
+			
 		}catch(Exception e) {
 			logger.error(e);
 		}
@@ -36,7 +41,7 @@ public class EScheme implements Scheme {
 		value.add(key==null?"":key);
 		return value;
 	}
-
+	
 	public Fields getOutputFields() {
 		return new Fields("json", "key");
 	}

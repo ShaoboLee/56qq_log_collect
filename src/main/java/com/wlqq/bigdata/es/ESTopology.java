@@ -29,11 +29,11 @@ public class ESTopology {
 
 	public static void main(String[] args) throws ClassNotFoundException{
 		
-		if(args.length!=1){
-			System.err.println("Usage:./bin/storm jar xxx.jar com.wlqq.bigdata.es.ESTopology xxxxx.yaml");
-			System.exit(0);
-		}
-		
+//		if(args.length!=1){
+//			System.err.println("Usage:./bin/storm jar xxx.jar com.wlqq.bigdata.es.ESTopology xxxxx.yaml");
+//			System.exit(0);
+//		}
+//		
 		Map<String, Object> userConfig = backtype.storm.utils.Utils.findAndReadConfigFile(args.length==0?"conf/es.yaml":args[0], true);
 		BrokerHosts brokerHosts = new ZkHosts(userConfig.get(Utils.ZKS).toString());
 		String topicName = userConfig.get(Utils.TOPIC).toString();
@@ -79,33 +79,6 @@ public class ESTopology {
 		.shuffleGrouping("bolt-es-loader", Utils.FAILED_REJECT_STREAM)
 		.shuffleGrouping("bolt-es-loader", Utils.FAILED_MAPPING_STREAM)
 		.shuffleGrouping("bolt-distribution", Utils.RAWDATA_FORMAT_ERROR_STREAM);
-        
-        
-//		builder.setBolt("bolt-es-loader", loadBolt, Utils.getValue(userConfig, Utils.LOADER_PARALLELISM, 1))
-//				.shuffleGrouping("spout-kafka-reader");
-//		builder.setBolt("falt-tolerant", new FaultTolerantBolt(), Utils.getValue(userConfig, Utils.TOLERANT_PARALLELISM, 1))
-//		        .shuffleGrouping("bolt-es-loader", Utils.SUCCESS_STREAM)
-//				.shuffleGrouping("bolt-es-loader", Utils.RAWDATA_FORMAT_ERROR_STREAM)
-//				.shuffleGrouping("bolt-es-loader", Utils.ES_RESULT_ERROR_STREAM)
-//				.shuffleGrouping("bolt-es-loader", Utils.ES_EXECUTE_EXCEPTION_STREAM)
-//				.shuffleGrouping("bolt-es-loader", Utils.FAILED_RECOVERABLE_STREAM)
-//				.shuffleGrouping("bolt-es-loader", Utils.FAILED_UNEXPECTED_STREAM)
-//				.shuffleGrouping("bolt-es-loader", Utils.QUEUE_TIMEOUT_STREAM)
-//				.shuffleGrouping("bolt-es-loader", Utils.FAILED_REJECT_STREAM)
-//				.shuffleGrouping("bolt-es-loader", Utils.FAILED_MAPPING_STREAM);
-		
-//		Config conf = new Config();
-//
-//		conf.registerMetricsConsumer(
-//				Class.forName(Utils.getString(userConfig, METRICS_CONSUMER, LoggingMetricsConsumer.class.getName())),
-//				Utils.getInteger(userConfig, METRICS_PARALLELISM, 1));
-//
-//		conf.put(Config.NIMBUS_HOST, userConfig.get(NIMBUS_HOST));
-//		conf.setNumWorkers(Utils.getInteger(userConfig, WORKS_NUMBER, 1));
-//		conf.putAll(userConfig);
-//		String name = userConfig.get(TOPOLOGY_NAME).toString();
-//
-//		StormSubmitter.submitTopologyWithProgressBar(name, conf, builder.createTopology());
         
         Config conf = new Config();
         

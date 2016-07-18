@@ -89,7 +89,8 @@ public class MonitorDirectorySpout extends BaseRichSpout{
 			FileStatus[] fstatus = fs.listStatus(logPath);
 			for(FileStatus f:fstatus){
 				String num = f.getPath().getName();
-				if(f.isDirectory() && isNum(num)){
+				//if(f.isDirectory() && isNum(num)){
+				if(f.isDirectory()){
 					logger.info("monitor taskId:"+num);
 					collector.emit(new Values(num));
 				}

@@ -106,7 +106,9 @@ public class FindFileByTaskIDBolt extends BaseRichBolt {
     		return;
     	}
 		List<String> list = hiveJDBC.showTables(database);
-    	Pattern pattern = Pattern.compile("(\\d+)_[dh]$");
+		System.out.println(list);
+    	//Pattern pattern = Pattern.compile("(\\d+)_[dh]$");
+		Pattern pattern = Pattern.compile("([^_]+)_[dh]$");
     	
     	for(String t:list){
     		Matcher matcher = pattern.matcher(t);
@@ -127,13 +129,15 @@ public class FindFileByTaskIDBolt extends BaseRichBolt {
 	 */
 	public void execute(Tuple input) {
 		
-    	long begin = System.currentTimeMillis();
+   	long begin = System.currentTimeMillis();
+    	//在topic和hive的表名做映射时，先对topic做处理，改小写和替换掉-和_
 		String taskId = input.getString(0);
+		//String tableId = input.getString(0).toLowerCase().replaceAll("[_\\-]", "");
 		String logFile = hdfsWritePath+"/"+taskId;
-		String tablename = taskID2Table.get(taskId);
+		String tablename = taskID2Table.get(taskId.toLowerCase().replaceAll("[_\\-]", ""));
 		if(tablename==null){//可能是新增加的业务，之前没有建这个表
 			updateTables(database);
-			tablename = taskID2Table.get(taskId);
+			tablename = taskID2Table.get(taskId.toLowerCase().replaceAll("[_\\-]", ""));
 			if(tablename==null){
 				logger.error("业务id:"+taskId+",对应的表在hive里面还没有建立,也有可能hiveserver挂掉了，导致show tables操作失败");
 				collector.ack(input);
@@ -141,7 +145,7 @@ public class FindFileByTaskIDBolt extends BaseRichBolt {
 			}
 		}
 		
-		String partitionName = taskID2DayPartition.get(taskId);
+		String partitionName = taskID2DayPartition.get(taskId.toLowerCase().replaceAll("[_\\-]", ""));
 		if(partitionName==null){
 			logger.error("业务id:"+taskId+",查找table:"+tablename+"对应的分区名称失败");
 			collector.ack(input);
@@ -304,6 +308,17 @@ public class FindFileByTaskIDBolt extends BaseRichBolt {
 	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		declarer.declare(new Fields("filePath","tablename","dayPartitonName","day"));
 	}
+	
+//	public static void main(String[] args){
+//		System.out.println("ADBD-DDB_DTTC-G".toLowerCase().replaceAll("[_\\-]", ""));
+//		FindFileByTaskIDBolt fb = new FindFileByTaskIDBolt(new HashMap<String, Object>());
+//		fb.hiveJsonSerdeJarPath="hdfs://c1/apps/hive/udfjars/json-serde-1.3.8-SNAPSHOT-jar-with-dependencies.jar";
+//		fb.taskID2Table = new HashMap<String,String>();
+//		fb.taskID2DayPartition = new HashMap<String,String>();
+//		fb.updateTables("client_business_log");
+//		System.out.println(fb.taskID2Table);
+//		System.out.println(fb.taskID2DayPartition);
+//	}
 }
 
 

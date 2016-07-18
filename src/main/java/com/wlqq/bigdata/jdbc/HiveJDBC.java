@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 //import org.apache.hive.jdbc.HiveDriver;
 
-import org.apache.commons.logging.Log;
+import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
  /**
@@ -31,7 +31,7 @@ public class HiveJDBC implements Serializable{
 	public boolean init(String host,String port){
 		try {
 		      Class.forName(driverName);
-		      con = DriverManager.getConnection("jdbc:hive2://"+host+":"+port+"/default", "", "");
+		      con = DriverManager.getConnection("jdbc:hive2://"+host+":"+port+"/default", "storm", "");
 		      stmt = con.createStatement();
 		      return true;
 		    } catch (ClassNotFoundException e) {

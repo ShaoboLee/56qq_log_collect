@@ -26,7 +26,6 @@ import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.spout.SchemeAsMultiScheme;
 import backtype.storm.topology.TopologyBuilder;
 
-import com.wlqq.bigdata.common.Utils;
 import com.wlqq.bigdata.storm.hdfs.bolt.HdfsBolt;
 import com.wlqq.bigdata.storm.hdfs.bolt.format.DefaultFileNameFormat;
 import com.wlqq.bigdata.storm.hdfs.bolt.format.DelimitedRecordFormat;
@@ -40,6 +39,7 @@ import com.wlqq.bigdata.storm.hdfs.bolt.sync.CountSyncPolicy;
 import com.wlqq.bigdata.storm.hdfs.bolt.sync.SyncPolicy;
 import com.wlqq.bigdata.storm.hdfs.common.rotation.LoadDataToHiveAction;
 import com.wlqq.bigdata.storm.hdfs.common.rotation.RotationAction;
+import com.wlqq.bigdata.utils.Utils;
 
 /**
  * 读取kafka里面的各个topic，解析之后，写到对应的hive表分区里面（指定字段分隔符存放或者就以json格式存放）
@@ -51,9 +51,6 @@ import com.wlqq.bigdata.storm.hdfs.common.rotation.RotationAction;
  * 另外还需要注意，Namenode的HA问题，是在Config里面单独用一个key来存放HA用到的配置信息
  * 这个topology目前还存在的问题：
  * 1）往hdfs写失败后，没有做处理
- * 2）没有考虑文件压缩
- * 3）没有考虑topology在kill后的收尾处理
- * 4）load到hive失败时，没有处理，只能通过手动把数据load到hive
  * 
  * @author wangchi
  *

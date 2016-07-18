@@ -1,16 +1,14 @@
 package com.wlqq.bigdata.hdfs;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.alibaba.fastjson.JSONObject;
-import com.wlqq.bigdata.common.KafkaProduce;
-import com.wlqq.bigdata.common.Utils;
+import com.wlqq.bigdata.utils.KafkaProduce;
+import com.wlqq.bigdata.utils.Utils;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -46,7 +44,7 @@ public class ParseJsonBolt  extends BaseRichBolt {
 			OutputCollector collector) {
 		// TODO Auto-generated method stub
 		this.collector = collector;
-		p = new KafkaProduce(userConfig);
+		p = new KafkaProduce(userConfig,collector);
 		delimiter = Utils.getValue(userConfig, Utils.HIVE_FIELD_DELIMITER, "\001");
 		
 	}
@@ -60,8 +58,8 @@ public class ParseJsonBolt  extends BaseRichBolt {
 		}catch(Exception e){
 			logger.error(e);
 			//解析失败的数据，发送到相应的topic
-			p.produce(Utils.getValue(userConfig, Utils.DEFAULT_RECEIVE_WRONG_DATA_TOPIC, "wrong-data-topic"),null,json);
-			collector.ack(input);
+			p.produce(Utils.getValue(userConfig, Utils.DEFAULT_RECEIVE_WRONG_DATA_TOPIC, "wrong-data-topic"),null,json,input);
+			//collector.ack(input);
 			return;
 		}
         

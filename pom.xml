@@ -10,7 +10,7 @@
 	<artifactId>kafka-storm-kafka</artifactId>
 	<version>1.1.0</version>
 	<packaging>jar</packaging>
-
+ 
 	<properties>
 		<compiler.version>1.7</compiler.version>
 		<jackson.version>1.9.9</jackson.version>
@@ -61,9 +61,8 @@
 		<dependency>
 			<groupId>com.alibaba</groupId>
 			<artifactId>fastjson</artifactId>
-			<version>1.2.7</version>
+			<version>1.1.39</version>
 		</dependency>
-		
 		<dependency>
 			<groupId>org.apache.storm</groupId>
 			<artifactId>storm-core</artifactId>
@@ -75,7 +74,8 @@
 			<artifactId>storm-kafka</artifactId>
 			<version>${storm.version}</version>
 		</dependency>
-		
+		 
+		 
 		<!--  
 		<dependency>
 	         <groupId>org.apache.storm</groupId>
@@ -150,6 +150,28 @@
             <version>4.3.5</version>
         </dependency>
         
+        <dependency>
+            <groupId>com.wlqq.monitor</groupId>
+            <artifactId>monitor-sdk</artifactId>
+            <version>0.0.1</version>
+        </dependency>
+
 	</dependencies>
+	
+
+    <!--
+	<distributionManagement>
+		<repository>
+			<id>wlqq-releases</id>
+			<name>wlqq-releases-repository</name>
+			<url>http://nexus.56qq.cn:81/content/repositories/wlqq-releases/</url>
+		</repository>
+		<snapshotRepository>
+			<id>wlqq-snapshots</id>
+			<name>wlqq-snapshots-repository</name>
+			<url>http://nexus.56qq.cn:81/content/repositories/wlqq-snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
+    -->
 
 </project>

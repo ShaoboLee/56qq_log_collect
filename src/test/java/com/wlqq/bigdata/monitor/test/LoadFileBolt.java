@@ -13,9 +13,9 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.util.ReflectionUtils;
 
-import com.wlqq.bigdata.common.HdfsUtils;
-import com.wlqq.bigdata.common.Utils;
 import com.wlqq.bigdata.jdbc.HiveJDBC;
+import com.wlqq.bigdata.utils.HdfsUtils;
+import com.wlqq.bigdata.utils.Utils;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;

@@ -1,0 +1,16 @@
+*.class
+*.project
+*.classpath
+target/
+.settings/
+classes/
+*.jar
+lib/
+bin/
+*.log
+*.springBeans
+*.prj
+*.pjb
+*.oob
+*.pdb
+*.tern-project

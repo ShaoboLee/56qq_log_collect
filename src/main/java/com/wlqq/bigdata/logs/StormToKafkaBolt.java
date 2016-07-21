@@ -50,107 +50,13 @@ public class StormToKafkaBolt extends BaseRichBolt {
 		this.userConfig = userConfig;
 	}
 	 
-	public void activate(){
-		boolean success = false;
-		Exception ex = null;
-		while(!success){
-			try {
-				client.activate(userConfig.get(Utils.TOPOLOGY_NAME).toString());
-				
-			} catch (NotAliveException e) {
-				// TODO Auto-generated catch block
-				ex = e;
-			} catch (AuthorizationException e) {
-				// TODO Auto-generated catch block
-				ex = e;
-			} catch (TException e) {
-				// TODO Auto-generated catch block
-				ex = e;
-			} 
-			if(ex==null){
-				success = true;
-				logger.info("activate success...");
-			}else{
-				logger.error("activate fail...", ex);
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		}
-		
-	}
-	
-	/**
-	 * 暂停这个topology的执行，spout不在调用nextTuple
-	 */
-	public void suspend(){
-		Exception ex = null;
-		try {
-			client.deactivate(userConfig.get(Utils.TOPOLOGY_NAME).toString());
-			logger.info("suspend "+Utils.getValue(userConfig, Utils.TOPOLOGY_SUSPEND_TIME_SEC, 60)+"s...");
-			Thread.sleep(Utils.getValue(userConfig, Utils.TOPOLOGY_SUSPEND_TIME_SEC, 60)*1000);
-			p.setContinuityFailCount(0);//重新置0
-		} catch (NotAliveException e) {
-			// TODO Auto-generated catch block
-			ex = e;
-		} catch (AuthorizationException e) {
-			// TODO Auto-generated catch block
-			ex = e;
-		} catch (TException e) {
-			// TODO Auto-generated catch block
-			ex = e;
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		if(ex==null){//suspend success
-			logger.info("deactivate success");
-			activate();
-		}else{
-			logger.error("deactivate fail...",ex);
-		}
-	}
-	
 	
     public void prepare(Map stormConf, TopologyContext context,
               OutputCollector collector) {
     	
     	client = NimbusClient.getConfiguredClient(stormConf).getClient();
     	p =  new KafkaProduce(userConfig,collector);
-    	//monitor = new Monitor(userConfig);
-    	monitorTopic = Utils.getValue(userConfig, Utils.MONITOR_TOPIC, "monitor");
 	    this.collector = collector;
-	    
-	    executor = new Thread(new Runnable() {
-	    	long current = System.currentTimeMillis();
-			public void run() {
-				logger.info("thread start...");
-				Exception ex = null;
-				while (!closeFlag) {
-					//logger.info("进入循环体里面...");
-					if(System.currentTimeMillis()-current>=10*1000){
-						current = System.currentTimeMillis();
-						logger.info("write data to kafka,total fail num="+p.getTotalFailCount()
-								+",getContinuityFailCount="+p.getContinuityFailCount());
-					}
-					if(p.getContinuityFailCount()>=Utils.getValue(userConfig, Utils.KAFKA_WRITE_FAIL_THRESHOLD, 5)){
-						suspend(); 
-					}else{
-						try {
-							Thread.sleep(10);
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-				}
-				closeable = true;
-			}
-	    });
-	    executor.start();
 	  
     }
 

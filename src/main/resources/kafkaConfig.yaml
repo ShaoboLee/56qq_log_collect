@@ -1,0 +1,11 @@
+#kafka
+topic : 'topci1' #
+bootstrap.servers : 'v32:6667,v29:6667' #指定kafka的broker信息，produce会用到
+acks : '1' #生产者发送数据给kafka的确认信息，可以设置的值: 0、1、all，0：生产者不会等待kafka的任何确认信息，保存到buffer后就立即返回。1：只要leader写入成功或失败就会返回确认信息，不用管followers是否成功。all：等待in-sync里面的replicas的确认信息
+retries : 0 #produce发送失败重试次数，默认0
+batch.size : 16384 #Producer会尝试去把发往同一个Partition的多个Requests进行合并，batch.size指明了一次Batch合并后Requests总大小的上限
+linger.ms : 0
+buffer.memory : 33554432 #producer可以用来缓存数据的内存大小
+maxOffsetBehind : 1000 #落后多少条记录后就丢弃这条记录
+key.serializer : 'org.apache.kafka.common.serialization.StringSerializer'
+value.serializer : 'org.apache.kafka.common.serialization.StringSerializer'

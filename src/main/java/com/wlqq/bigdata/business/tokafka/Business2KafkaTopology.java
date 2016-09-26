@@ -45,10 +45,10 @@ public class Business2KafkaTopology {
 	public static void main(String[] args) throws ClassNotFoundException{
 		
         //以storm和kafka相关参数的配置文件作为参数		
-		if(args.length!=1){
-			System.err.println("Usage:./bin/storm jar xxx.jar com.wlqq.bigdata.business.tokafka.Business2KafkaTopology xxxxx.yaml");
-			System.exit(0);
-		}
+//		if(args.length!=1){
+//			System.err.println("Usage:./bin/storm jar xxx.jar com.wlqq.bigdata.business.tokafka.Business2KafkaTopology xxxxx.yaml");
+//			System.exit(0);
+//		}
 		
 		Map<String, Object> userConfig = backtype.storm.utils.Utils.findAndReadConfigFile(args.length==0?"conf/storm-kafka.yaml":args[0], true);
 		BrokerHosts brokerHosts = new ZkHosts(userConfig.get(Utils.ZKS).toString());

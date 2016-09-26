@@ -33,17 +33,17 @@ public class MonitorDirectorySpout extends BaseRichSpout{
 	private SpoutOutputCollector collector;
 	private FileSystem fs;
 	private String fsUrl;
-	private String hivehost;
-	private String hiveport;
-	private String hiveJsonSerdeJarPath;
-	private HiveJDBC hiveJDBC;
+//	private String hivehost;
+//	private String hiveport;
+//	private String hiveJsonSerdeJarPath;
+//	private HiveJDBC hiveJDBC;
 	private String hdfsWritePath; 
 	
 	public MonitorDirectorySpout(Map<String, Object> userConfig){
 		this.userConfig = userConfig;
-		hivehost = Utils.getValue(userConfig, Utils.HIVE_HOST, "v29");
-    	hiveport = Utils.getValue(userConfig, Utils.HIVE_PORT, "10000");
-    	hiveJsonSerdeJarPath = Utils.getValue(userConfig, Utils.HIVE_JSON_SERDE_JAR_PATH, "");
+//		hivehost = Utils.getValue(userConfig, Utils.HIVE_HOST, "v29");
+//    	hiveport = Utils.getValue(userConfig, Utils.HIVE_PORT, "10000");
+//    	hiveJsonSerdeJarPath = Utils.getValue(userConfig, Utils.HIVE_JSON_SERDE_JAR_PATH, "");
     	hdfsWritePath = Utils.getValue(userConfig, Utils.HDFS_WRITE_PATH,"");
 	}
 
@@ -68,12 +68,12 @@ public class MonitorDirectorySpout extends BaseRichSpout{
 		
 	}
 
-	Pattern pattern = Pattern.compile("^\\d+$");
-	
-	private boolean isNum(String num){
-		Matcher matcher = pattern.matcher(num);
-		return matcher.matches();
-	}
+//	Pattern pattern = Pattern.compile("^\\d+$");
+//	
+//	private boolean isNum(String num){
+//		Matcher matcher = pattern.matcher(num);
+//		return matcher.matches();
+//	}
 	
     /**
      * 访问hdfs的hdfsWritePath目录，如果文件是目录并且是数值型（业务id）就往下一级bolt发送	

@@ -31,17 +31,10 @@ public class StormToKafkaBolt extends BaseRichBolt {
 	
 	private static final Log logger = LogFactory.getLog(StormToKafkaBolt.class);
     private static final long serialVersionUID = 886149197481637891L;
-	//ProducerConfig config; 
 	Map<String, Object> userConfig;
-	//ZkClient zc;//find topics
 	KafkaProduce p;
 	OutputCollector collector;
-//	HashMap<String,String> topics;
-//	long begin;
-//	long updateTopicsInfoIntervalMs;
-	//Monitor monitor;
 	String monitorTopic;
-	private Thread executor = null;
 	Client client;
 	private boolean closeFlag = false;
 	private boolean closeable = false;
@@ -66,16 +59,16 @@ public class StormToKafkaBolt extends BaseRichBolt {
     public void execute(Tuple input) {
     	
     	String topic = input.getStringByField("topic");
-    	String _dfp_ = input.getStringByField("_dfp_");
     	String json = input.getStringByField("json");
  
     	//在异步方法send里面进行collector方法的调用
-    	p.produce(topic,_dfp_,json,input);
+    	p.produce(topic,"",json,input);
+    	collector.ack(input);
     }
     
     public void declareOutputFields(OutputFieldsDeclarer declare) {
-    	declare.declareStream(Utils.SUCCESS_STREAM, new Fields("topic","message","exception","json"));
-		declare.declareStream(Utils.KAFKA_WRITE_FAIL_STREAM, new Fields("topic","message","exception","json"));
+//    	declare.declareStream(Utils.SUCCESS_STREAM, new Fields("topic","message","exception","json"));
+//		declare.declareStream(Utils.KAFKA_WRITE_FAIL_STREAM, new Fields("topic","message","exception","json"));
                  
     }
     

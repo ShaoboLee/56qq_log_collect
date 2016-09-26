@@ -37,11 +37,6 @@ public class BatchESLoadBolt extends BaseRichBolt {
 	private int queueTimeout = -1;
 	private int queueSize = -1;
 	private int timeOutCount = 1;
-	//private Monitor monitor;
-	//private String monitorTopic;
-	
-//	long count = 0;
-//	long begin;
 
 	/**
 	 * 初始化阻塞队列，启动一个子线程，当队列里面有数据时就往es发送
@@ -58,17 +53,13 @@ public class BatchESLoadBolt extends BaseRichBolt {
 		final List<Tuple> tmpTuples = new ArrayList<Tuple>(tupleQueue.size());
 		executor = new Thread(new Runnable() {
 			public void run() {
-
-				//Map<String,Map<String,Object>> map = new HashMap<String, Map<String,Object>>();//存放监控的指标值
-				//initMap(map);
-				long count = 0;
-				long total = 0l;
 				long begin = System.currentTimeMillis();
 				while (!closeFlag) {
 					try {
 						//logger.info("queue size="+tupleQueue.size());
 						//判断当前队列存放数据的个数是否达到设定的阈值,没有达到就多等一会儿,要不然数据量越小,es写入消耗的时间就越少,
 						//这段时间内写入队列的数据就可能更少了,从而形成恶性循环，适当的等下,可以提升一些es的写入率
+						
 						if(tupleQueue.size()<queueSize*Utils.getValue(userConfig, Utils.THREAD_QUEUE_PERCENT, 0.5)){
 							//logger.info(Thread.currentThread().getName()+" before queue size="+tupleQueue.size()+"data is not enough,sleep ");
 							Thread.sleep(Utils.getValue(userConfig, Utils.THREAD_QUEUE_SLEEP_MS, 100));
@@ -84,13 +75,11 @@ public class BatchESLoadBolt extends BaseRichBolt {
 								logger.info(e);
 							}
 						} else {
-							long start = System.currentTimeMillis();
 							logger.info("+++batch load documents:" + tmpTuples.size());
 							long t1 = System.currentTimeMillis();
 							results = loader.bulkLoadDocuments(tmpTuples);
 							logger.info("+++++++batchloaddocuments cost time:" + (System.currentTimeMillis() - t1)
 									+ " ms");
-							//setZero(map);
 							// 如果不是异常导致的写es失败，例如缺少ID、格式错误等情况，再写ES也将继续失败，因此反馈spout成功，并将失败进行记录，待后续处理
 							for (Result res : results) {
 								switch (res.getStatus()) {
@@ -102,43 +91,31 @@ public class BatchESLoadBolt extends BaseRichBolt {
 								case FAILED_RAWDATA_FORMAT_ERROR: {
 									emitResult(Utils.RAWDATA_FORMAT_ERROR_STREAM, res);
 									collector.ack(res.getTuple());
-									//int num = (Integer) map.get("FAILED_RAWDATA_FORMAT_ERROR").get("num");
-									//map.get("FAILED_RAWDATA_FORMAT_ERROR").put("num", num+1);
 									break;
 								}
 								case FAILED_BY_ES_RESULT: {
 									emitResult(Utils.ES_RESULT_ERROR_STREAM, res);
 									collector.fail(res.getTuple());
-									//int num = (Integer) map.get("FAILED_BY_ES_RESULT").get("num");
-									//map.get("FAILED_BY_ES_RESULT").put("num", num+1);
 									break;
 								}
 								case FAILED_BY_ES_EXECUTE_EXCEPTION: {
 									emitResult(Utils.ES_EXECUTE_EXCEPTION_STREAM, res);
 									collector.fail(res.getTuple());
-									//int num = (Integer) map.get("FAILED_BY_ES_EXECUTE_EXCEPTION").get("num");
-									//map.get("FAILED_BY_ES_EXECUTE_EXCEPTION").put("num", num+1);
 									break;
 								}
 								case FAILED_RECOVERABLE: {
 									emitResult(Utils.FAILED_RECOVERABLE_STREAM, res);
 									collector.fail(res.getTuple());
-									//int num = (Integer) map.get("FAILED_RECOVERABLE").get("num");
-									//map.get("FAILED_RECOVERABLE").put("num", num+1);
 									break;
 								}
 								case FAILED_REJECT_ERROR: {
 									emitResult(Utils.FAILED_REJECT_STREAM, res);
 									collector.fail(res.getTuple());
-									//int num = (Integer) map.get("FAILED_REJECT_ERROR").get("num");
-									//map.get("FAILED_REJECT_ERROR").put("num", num+1);
 									break;
 								}
 								case FAILED_MAPPING_ERROR: {
 									emitResult(Utils.FAILED_MAPPING_STREAM, res);
 									collector.ack(res.getTuple());
-									//int num = (Integer) map.get("FAILED_MAPPING_ERROR").get("num");
-									//map.get("FAILED_MAPPING_ERROR").put("num", num+1);
 									break;
 								}
 								default: {
@@ -147,11 +124,6 @@ public class BatchESLoadBolt extends BaseRichBolt {
 								}
 								}
 							}
-							count++;
-							long end = System.currentTimeMillis();
-							total +=(end-start);
-							
-							//writeToKafka(map);
 						}
 					} catch (Exception e) {
 						logger.error(e);
@@ -172,11 +144,8 @@ public class BatchESLoadBolt extends BaseRichBolt {
 	public void prepare(Map stormConf, TopologyContext context,
 			OutputCollector collector) {
 		this.collector = collector;
-//		monitor = new Monitor(userConfig);
-//    	monitorTopic = Utils.getValue(userConfig, Utils.MONITOR_TOPIC, "monitor");
 		try {
 			init(userConfig);
-			//begin = System.currentTimeMillis();
 		} catch (IOException e) {
 			logger.error("Init elasticsearch failed.", e);
 		}

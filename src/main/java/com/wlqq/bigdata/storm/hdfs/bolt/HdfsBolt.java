@@ -21,8 +21,6 @@ import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.tuple.Tuple;
 
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -36,11 +34,9 @@ import com.wlqq.bigdata.storm.hdfs.bolt.format.RecordFormat;
 import com.wlqq.bigdata.storm.hdfs.bolt.rotation.FileRotationPolicy;
 import com.wlqq.bigdata.storm.hdfs.bolt.sync.SyncPolicy;
 import com.wlqq.bigdata.storm.hdfs.common.rotation.RotationAction;
-import com.wlqq.bigdata.utils.Utils;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -173,11 +169,12 @@ public class HdfsBolt extends AbstractHdfsBolt{
 
     public void execute(Tuple tuple) {
         try {
+        	
             byte[] bytes = this.format.format(tuple);
             synchronized (this.writeLock) {
                 out.write(bytes);
                 this.offset += bytes.length;
-
+                
                 if (this.syncPolicy.mark(tuple, this.offset)) {
                     if (this.out instanceof HdfsDataOutputStream) {
                         ((HdfsDataOutputStream) this.out).hsync(EnumSet.of(SyncFlag.UPDATE_LENGTH));
@@ -189,7 +186,7 @@ public class HdfsBolt extends AbstractHdfsBolt{
                     this.syncPolicy.reset();
                 }
             }
-
+            
             this.collector.ack(tuple);
 
             if(this.rotationPolicy.mark(tuple, this.offset)){

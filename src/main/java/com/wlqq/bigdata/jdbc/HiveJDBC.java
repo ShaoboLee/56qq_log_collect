@@ -28,21 +28,27 @@ public class HiveJDBC implements Serializable{
 	private Statement stmt; 
 	//boolean flag = true;//jdbc init;
 	
-	public boolean init(String host,String port){
-		try {
-		      Class.forName(driverName);
-		      con = DriverManager.getConnection("jdbc:hive2://"+host+":"+port+"/default", "storm", "");
-		      stmt = con.createStatement();
-		      return true;
-		    } catch (ClassNotFoundException e) {
-		      // TODO Auto-generated catch block
-		      e.printStackTrace();
-		      //flag = false;
-		    } catch (SQLException e) {
+	public boolean init(String hosts, String port) {
+		String[] ht = hosts.split(",");
+
+		for (String host : ht) {
+			try {
+				Class.forName(driverName);
+				con = DriverManager.getConnection("jdbc:hive2://" + host + ":"
+						+ port + "/default", "storm", "");
+				stmt = con.createStatement();
+				return true;
+			} catch (ClassNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				//flag = false;
+				// flag = false;
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				// flag = false;
 			}
+		}
+
 		return false;
 	}
 	
@@ -134,7 +140,7 @@ public class HiveJDBC implements Serializable{
   
 	public static void main(String[] args) throws SQLException {
 		HiveJDBC jdbc = new HiveJDBC();
-		jdbc.init("v29", "10000");
+		jdbc.init("v28,v29", "10000");
 		String table = "operation_activity_10004_d";
 		//jdbc.loadData("add jar hdfs://c1/apps/hive/udfjars/json-serde-1.3.8-SNAPSHOT-jar-with-dependencies.jar");
 		//jdbc.loadData("use client_business_log");
